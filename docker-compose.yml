@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  website:
+    # Build image in same directory.
+    # (That's where dockerfile is )
+    build: .
+    command: >
+      gunicorn -b 0.0.0.0:8000
+        --access-logfile -
+        --reload
+        "canopact.app:create_app()"
+    # Custom env varaibles in docker container.
+    environment:
+      # Sends log output to terminal in real time.
+      PYTHONUNBUFFERED: 'true'
+    # Mount app into container. (matches docker file.)
+    volumes:
+      - '.:/canopact'
+    ports:
+      - '8000:8000'

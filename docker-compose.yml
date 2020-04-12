@@ -1,21 +1,45 @@
 version: '2'
 
 services:
+  postgres:
+    image: 'postgres:9.5'
+    env_file:
+      - '.env'
+    volumes:
+      - 'postgres:/var/lib/postgresql/data'
+    ports:
+      - '5432:5432'
+
+  redis:
+    image: 'redis:3.0-alpine'
+    command: redis-server --requirepass devpassword
+    volumes:
+      - 'redis:/var/lib/redis/data'
+    ports:
+      - '6379:6379'
+
   website:
-    # Build image in same directory.
-    # (That's where dockerfile is )
     build: .
     command: >
       gunicorn -b 0.0.0.0:8000
         --access-logfile -
         --reload
         "canopact.app:create_app()"
-    # Custom env varaibles in docker container.
-    environment:
-      # Sends log output to terminal in real time.
-      PYTHONUNBUFFERED: 'true'
-    # Mount app into container. (matches docker file.)
+    env_file:
+      - '.env'
     volumes:
       - '.:/canopact'
     ports:
       - '8000:8000'
+
+  celery:
+    build: .
+    command: celery worker -l info -A canopact.blueprints.contact.tasks
+    env_file:
+      - '.env'
+    volumes:
+      - '.:/canopact'
+
+volumes:
+  postgres:
+  redis:

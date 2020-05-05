@@ -1,0 +1,1 @@
+from canopact.blueprints.carbon.views import carbon

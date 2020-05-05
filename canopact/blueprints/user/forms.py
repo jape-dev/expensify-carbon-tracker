@@ -1,9 +1,10 @@
 from flask_wtf import Form
-from wtforms import HiddenField, StringField, PasswordField
+from wtforms import HiddenField, StringField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Length, Optional, Regexp
 from wtforms_components import EmailField, Email, Unique
 
-from lib.util_wtforms import ModelForm
+from config.settings import LANGUAGES
+from lib.util_wtforms import ModelForm, choices_from_dict
 from canopact.blueprints.user.models import User, db
 from canopact.blueprints.user.validations import ensure_identity_exists, \
     ensure_existing_password_matches
@@ -57,7 +58,7 @@ class WelcomeForm(ModelForm):
     ])
 
 
-class UpdateCredentials(ModelForm):
+class UpdateCredentialsForm(ModelForm):
     current_password = PasswordField('Current password',
                                      [DataRequired(),
                                       Length(8, 128),
@@ -71,3 +72,19 @@ class UpdateCredentials(ModelForm):
         )
     ])
     password = PasswordField('Password', [Optional(), Length(8, 128)])
+
+
+class ExpensifyAPICredentialsForm(ModelForm):
+    partnerUserID = StringField('partnerUserID',
+                                [DataRequired(),
+                                 Length(3, 254)])
+
+    partnerUserSecret = StringField('partnerUserSecret',
+                                    [DataRequired(),
+                                     Length(3, 254)])
+
+
+class UpdateLocaleForm(Form):
+    locale = SelectField('Language preference', [DataRequired()],
+                         choices=choices_from_dict(LANGUAGES,
+                                                   prepend_blank=False))

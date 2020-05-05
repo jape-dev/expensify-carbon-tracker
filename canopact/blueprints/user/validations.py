@@ -27,5 +27,8 @@ def ensure_existing_password_matches(form, field):
     """
     user = User.query.get(form._obj.id)
 
+    print(user)
+    print(user.authenticated(password=field.data))
+
     if not user.authenticated(password=field.data):
         raise ValidationError('Does not match.')

@@ -221,9 +221,14 @@ class TestUpdateCredentials(ViewTestMixin):
         """ Update credentials failure due to invalid current password. """
         self.login()
 
-        user = {'current_password': 'nope', 'email': 'admin@local.host'}
+        user = {'current_password': 'nopenope', 'email': 'admin@local.host'}
         response = self.client.post(url_for('user.update_credentials'),
                                     data=user, follow_redirects=True)
+
+        old_user = User.find_by_identity('admin@local.host')
+        print(old_user)
+        print('----')
+        print(response.data)
 
         assert_status_with_message(200, response, 'Does not match.')
 
@@ -293,3 +298,36 @@ class TestUpdateCredentials(ViewTestMixin):
                                     data=user, follow_redirects=True)
 
         assert response.status_code == 200
+
+
+class TestUpdateLocale(ViewTestMixin):
+    def test_update_locale_page(self, users):
+        """ Update locale renders successfully. """
+        self.login()
+        response = self.client.get(url_for('user.update_locale'))
+
+        assert response.status_code == 200
+
+    def test_locale(self, users):
+        """ Locale works successfully. """
+        self.login()
+
+        user = {'locale': 'kl'}
+        response = self.client.post(url_for('user.update_locale'), data=user,
+                                    follow_redirects=True)
+
+        assert_status_with_message(200, response,
+                                   'Your locale settings have been updated.')
+
+    def test_klingon_locale(self, users):
+        """ Klingon locale works successfully. """
+        user = User.find_by_identity('admin@local.host')
+        user.locale = 'kl'
+        user.save()
+
+        self.login()
+
+        response = self.client.get(url_for('billing.purchase_coins'))
+
+        # Klingon for "Card".
+        assert_status_with_message(200, response, 'Chaw')

@@ -20,7 +20,9 @@ from canopact.blueprints.user.forms import (
     PasswordResetForm,
     SignupForm,
     WelcomeForm,
-    UpdateCredentials)
+    UpdateCredentialsForm,
+    ExpensifyAPICredentialsForm,
+    UpdateLocaleForm)
 
 user = Blueprint('user', __name__, template_folder='templates')
 
@@ -153,7 +155,7 @@ def settings():
 @user.route('/settings/update_credentials', methods=['GET', 'POST'])
 @login_required
 def update_credentials():
-    form = UpdateCredentials(current_user, uid=current_user.id)
+    form = UpdateCredentialsForm(current_user, uid=current_user.id)
 
     if form.validate_on_submit():
         new_password = request.form.get('password', '')
@@ -168,3 +170,35 @@ def update_credentials():
         return redirect(url_for('user.settings'))
 
     return render_template('user/update_credentials.html', form=form)
+
+
+@user.route('/settings/expensify_login', methods=['GET', 'POST'])
+@login_required
+def expensify_login():
+    form = ExpensifyAPICredentialsForm(current_user, uid=current_user.id)
+
+    if form.validate_on_submit():
+        current_user.partnerUserID = request.form.get('partnerUserID')
+        current_user.partnerUserSecret = request.form.get('partnerUserSecret')
+
+        current_user.save()
+
+        flash('Your Expensify API settings have been saved.', 'success')
+        return redirect(url_for('user.settings'))
+
+    return render_template('user/expensify_login.html', form=form)
+
+
+@user.route('/settings/update_locale', methods=['GET', 'POST'])
+@login_required
+def update_locale():
+    form = UpdateLocaleForm(locale=current_user.locale)
+
+    if form.validate_on_submit():
+        form.populate_obj(current_user)
+        current_user.save()
+
+        flash('Your locale settings have been updated.', 'success')
+        return redirect(url_for('user.settings'))
+
+    return render_template('user/update_locale.html', form=form)

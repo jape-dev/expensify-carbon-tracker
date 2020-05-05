@@ -15,7 +15,7 @@
   {% if f.errors %}
     <ul class="list-unstyled text-danger field-error">
       {% for error in f.errors %}
-          <li>{{ error | e }}</li>
+        <li>{{ error | e }}</li>
       {% endfor %}
     </ul>
   {% endif %}
@@ -41,10 +41,10 @@
   {% endif %}
 
   {% if f.type == 'BooleanField' %}
-      <div class="checkbox {{ css_class }}">
+    <div class="checkbox {{ css_class }}">
     {{ checkbox_field(f, **kwargs) }}
   {% else %}
-      <div class="form-group {{ css_class }}">
+    <div class="form-group {{ css_class }}">
     {{ field_label(f) }}
     {{ field(f, **kwargs) }}
   {% endif %}
@@ -62,4 +62,20 @@
     {{ form.hidden_tag() }}
     {{ caller () }}
   </form>
+{%- endmacro -%}
+
+
+{# Render a form for searching. #}
+{%- macro search(endpoint) -%}
+  {% call form_tag(endpoint, method='get') %}
+    <label for="q"></label>
+    <div class="input-group md-margin-bottom">
+      <input type="text" class="form-control"
+             id="q" name="q" value="{{ request.args.get('q', '') }}"
+             placeholder="Search by typing, then press enter...">
+    <span class="input-group-addon">
+      <i class="fa fa-fw fa-search"></i>
+    </span>
+    </div>
+  {% endcall %}
 {%- endmacro -%}

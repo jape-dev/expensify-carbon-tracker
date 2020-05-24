@@ -14,7 +14,6 @@ def fetch_reports(self, user_id):
     Returns:
         reports (list): expensify reports in JSON format.
     """
-    print(f"request id: {self.request.id}")
     user = User.query.get(user_id)
 
     # Get user Expensify API credentials.

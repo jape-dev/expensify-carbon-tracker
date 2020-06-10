@@ -148,6 +148,7 @@ class Expensify():
         """
         cleaned_reports = []
         missing = ['']
+        empty = []
         null = [None]
 
         for r in reports:
@@ -155,13 +156,14 @@ class Expensify():
             exp_count = Expensify.count_expenses(r)
             # Expand `missing` and `null` to match the number of expenses.
             missing_values = missing * exp_count
+            empty_values = empty * exp_count
             null_values = null * exp_count
 
             # Get the dict that contains expenses.
             exp = r[expenses_col]
             # Replace `missing_values` with `null_values`.
-            exp_cleaned = {k: null_values if v == missing_values
-                           else v for k, v in exp.items()}
+            exp_cleaned = {k: null_values if (v == missing_values or
+                           v == empty_values) else v for k, v in exp.items()}
             # Update the value for the `expenses_col` key.
             r[expenses_col] = exp_cleaned
             # Add cleaned report dict to the json list.
@@ -213,20 +215,20 @@ class Expensify():
         cleaned_reports = []
         for r in reports:
             # Convert the values of the report level keys.
-            r = {k: [int(x) if x is not None else x for x in v] if k in int_cols
-                 else v for k, v in r.items()}
+            r = {k: [int(x) if x is not None else x for x in v] if k in
+                 int_cols else v for k, v in r.items()}
 
-            r = {k: [float(x) if x is not None else x for x in v] if k in float_cols
-                 else v for k, v in r.items()}
+            r = {k: [float(x) if x is not None else x for x in v] if k in
+                 float_cols else v for k, v in r.items()}
 
             # Get the dict that contains expenses.
             exp = r[expenses_col]
             # Convert the values of the expense level keys.
-            exp = {k: [int(x) if x is not None else x for x in v] if k in int_cols
-                   else v for k, v in exp.items()}
+            exp = {k: [int(x) if x is not None else x for x in v] if k in
+                   int_cols else v for k, v in exp.items()}
 
-            exp = {k: [float(x) if x is not None else x for x in v] if k in float_cols
-                   else v for k, v in exp.items()}
+            exp = {k: [float(x) if x is not None else x for x in v] if k in
+                   float_cols else v for k, v in exp.items()}
 
             # Update the value for the `expenses_col` key.
             r[expenses_col] = exp

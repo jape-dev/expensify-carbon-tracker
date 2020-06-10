@@ -110,6 +110,32 @@ class ResourceMixin(object):
 
         return self
 
+    def update_and_save(self, model, **kwargs):
+        """Update record if id already exists.
+
+        Save to table if it is a new record.
+
+        Args:
+            model (db.Model): SQLAlchemy Model instance.
+
+        Example:
+            self.update_and_save(Report, report_id=653)
+
+        TODO:
+            Write a test.
+        """
+        # Check if id is already in the reports table.
+        exists = db.session.query(
+            db.session.query(model).filter_by(**kwargs).exists()
+        ).scalar()
+
+        if exists:
+            # Update the already existing report.
+            db.session.commit()
+        else:
+            # Add the new report to the table.
+            self.save()
+
     def delete(self):
         """
         Delete a model instance.

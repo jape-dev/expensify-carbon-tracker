@@ -1,6 +1,18 @@
-from lib.util_sqlalchemy import ResourceMixin, AwareDateTime
-from lib.util_datetime import tzware_datetime
+"""Models for Report and Expense.
+
+Author: James Patten
+First Build: May 2020
+
+Examples:
+    from canopact.blueprints.carbon.models import Report
+    from canopact.blueprints.carbon.models import Expense
+    r = Report()
+    e = Expense()
+
+"""
 from canopact.extensions import db
+from lib.util_sqlalchemy import ResourceMixin
+from vendors import expensify
 
 
 class Report(ResourceMixin, db.Model):
@@ -14,15 +26,39 @@ class Report(ResourceMixin, db.Model):
                                                   ondelete='CASCADE'),
                         index=True, nullable=False)
 
-    # Last updated date
-    update_datetime = db.Column(AwareDateTime())
-
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(Report, self).__init__(**kwargs)
 
-    @classmethod
-    def parse_report_from_list(cls, reports, r_num, user_id=None):
+    @staticmethod
+    def fetch_expensify_reports(User, user_ids):
+        """Fetch Expensify reports.
+
+        Args:
+            user_ids (list): list of user ids.
+
+        Returns:
+            dict: user_id and report list as key value pairs.
+
+        """
+        user_reports = {}
+        for uid in user_ids:
+            user = User.query.get(uid)
+
+            # Get user Expensify API credentials.
+            partnerUserID = user.partnerUserID
+            partnerUserSecret = user.partnerUserSecret
+
+            # Get all reports from Expensify Integration Server.
+            report_list = expensify.main(partnerUserID, partnerUserSecret)
+
+            # Append id as key and report list as value in dict.
+            user_reports[uid] = report_list
+
+        return user_reports
+
+    @staticmethod
+    def parse_report_from_list(reports, r_num, user_id=None):
         """Parse and return the expenses fields from a report.
 
         Args:
@@ -42,15 +78,6 @@ class Report(ResourceMixin, db.Model):
 
         return report
 
-    def save_and_update_report(self):
-        """Commit the report and update the the table.
-
-        :return: SQLAlchemy save result
-        """
-        self.update_datetime = tzware_datetime()
-
-        return self.save()
-
 
 class Expense(ResourceMixin, db.Model):
     __tablename__ = 'expenses'
@@ -69,10 +96,10 @@ class Expense(ResourceMixin, db.Model):
                           index=True, nullable=False)
 
     # Expense columns.
-    expense_type = db.Column(db.String(8))
+    expense_type = db.Column(db.String(50))
     expense_category = db.Column(db.String(100))
     expense_amount = db.Column(db.Float())
-    expense_currency = db.Column(db.String(8))
+    expense_currency = db.Column(db.String(50))
     expense_comment = db.Column(db.String(100))
     expense_converted_amount = db.Column(db.Float())
     expense_created_date = db.Column(db.Date())
@@ -81,19 +108,16 @@ class Expense(ResourceMixin, db.Model):
     expense_modified_amount = db.Column(db.Float())
     expense_modified_created_date = db.Column(db.Date())
     expense_modified_merchant = db.Column(db.String(100))
-    # expense_unit_count = db.Column(db.Integer())
-    # expense_unit_rate = db.Column(db.Float())
-    # expense_unit_unit = db.Column(db.Float())
-
-    # Last updated date
-    update_datetime = db.Column(AwareDateTime())
+    expense_unit_count = db.Column(db.Integer())
+    expense_unit_rate = db.Column(db.Float())
+    expense_unit_unit = db.Column(db.Float())
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(Expense, self).__init__(**kwargs)
 
-    @classmethod
-    def parse_expenses_from_list(cls, reports, r_num, user_id=None):
+    @staticmethod
+    def parse_expenses_from_list(reports, r_num, user_id=None):
         """Parse and return the expenses fields from a report.
 
         Args:
@@ -103,6 +127,7 @@ class Expense(ResourceMixin, db.Model):
 
         Returns:
             dict: keys value pairs of expense fields / information.
+
         """
         report = reports[r_num]
         data = report['report_expenses']
@@ -127,17 +152,18 @@ class Expense(ResourceMixin, db.Model):
             'expense_inserted_date': data['expense_inserted_date'],
             'expense_merchant': data['expense_merchant'],
             'expense_modified_amount': data['expense_modified_amount'],
-            'expense_modified_created_date': data['expense_modified_created_date'],
-            'expense_modified_merchant': data['expense_modified_merchant']
-            # 'expense_unit_count': data['expense_unit_count'],
-            # 'expense_unit_rate': data['expense_unit_rate'],
-            # 'expense_unit_unit': data['expense_unit_unit']
+            'expense_modified_created_date':
+                data['expense_modified_created_date'],
+            'expense_modified_merchant': data['expense_modified_merchant'],
+            'expense_unit_count': data['expense_unit_count'],
+            'expense_unit_rate': data['expense_unit_rate'],
+            'expense_unit_unit': data['expense_unit_unit']
         }
 
         return expenses
 
-    @classmethod
-    def parse_expense_from_report(cls, expenses, e_num):
+    @staticmethod
+    def parse_expense_from_report(expenses, e_num):
         """Parse a single expense from a dictionary of multiple expenses.
 
         Args:
@@ -146,6 +172,7 @@ class Expense(ResourceMixin, db.Model):
 
         Returns:
             dict: single expense.
+
         """
         # Sist of tuples for each key value of the expense with index:`exp_num`
         indexed_pairs = [(k, v[e_num]) for (k, v) in expenses.items()]
@@ -153,13 +180,3 @@ class Expense(ResourceMixin, db.Model):
         dict_pairs = dict(indexed_pairs)
 
         return dict_pairs
-
-    def save_and_update_expense(self):
-        """
-        Commit the report and update the the table.
-
-        :return: SQLAlchemy save result
-        """
-        self.update_datetime = tzware_datetime()
-
-        return self.save()

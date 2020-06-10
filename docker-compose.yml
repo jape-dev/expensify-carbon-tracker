@@ -31,11 +31,20 @@ services:
 
   celery:
     build: .
-    command: celery worker -B -l info -A canopact.blueprints.contact.tasks 
+    command: celery worker -l info -A canopact.blueprints.contact.tasks 
     env_file:
       - '.env'
     volumes:
       - '.:/canopact'
+
+  celery_beat:
+    build: .
+    command: celery beat -l info -A canopact.blueprints.contact.tasks -S redbeat.RedBeatScheduler 
+    env_file:
+    - '.env'
+    volumes:
+    - '.:/canopact'
+
 
 volumes:
   postgres:

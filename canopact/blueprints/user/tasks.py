@@ -23,8 +23,34 @@ def deliver_password_reset_email(user_id, reset_token):
 
     ctx = {'user': user, 'reset_token': reset_token}
 
-    send_template_message(subject='Password reset from Snake Eyes',
+    send_template_message(subject='Password reset from Canopact',
                           recipients=[user.email],
                           template='user/mail/password_reset', ctx=ctx)
+
+    return None
+
+
+@celery.task()
+def deliver_confirmation_email(user_id, confirm_url):
+    """
+    Sends an account confirmation email to the user.
+
+    Args:
+        user_id (int): the user id.
+        confirm_url (str): confirmation url for user to click on.
+
+    Returns:
+        None if no user found.
+    """
+    user = User.query.get(user_id)
+
+    if user is None:
+        return
+
+    ctx = {'user': user, 'confirm_url': confirm_url}
+
+    send_template_message(subject='Please confirm your Canopact account',
+                          recipients=[user.email],
+                          template='user/mail/email_confirmation', ctx=ctx)
 
     return None

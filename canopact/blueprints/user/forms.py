@@ -42,6 +42,13 @@ class SignupForm(ModelForm):
     password = PasswordField('Password', [DataRequired(), Length(8, 128)])
 
 
+class ResendEmailForm(Form):
+    identity = StringField("Didn't recieve an email? Re-enter below:",
+                           [DataRequired(),
+                            Length(3, 254),
+                            ensure_identity_exists])
+
+
 class WelcomeForm(ModelForm):
     username_message = 'Letters, numbers and underscores only please.'
 

@@ -1,4 +1,4 @@
-"""Celery Beat Task for updating Report and Expense.
+"""Celery Beat Task for updating Report, Expense, Route and Carbon.
 
 Fetches data from the Expensify Integration Server via Expensify's Public API:
 https://integrations.expensify.com/Integration-Server/doc/
@@ -13,8 +13,10 @@ Notes:
         }
 """
 from canopact.app import create_celery_app
-from canopact.blueprints.carbon.models import Expense
-from canopact.blueprints.carbon.models import Report
+from canopact.blueprints.carbon.models.expense import Carbon
+from canopact.blueprints.carbon.models.expense import Expense
+from canopact.blueprints.carbon.models.report import Report
+from canopact.blueprints.carbon.models.route import Route, Distance
 from canopact.blueprints.user.models import User
 from canopact.extensions import db
 
@@ -29,6 +31,7 @@ def fetch_reports(self):
     Data on expenses is also parsed from these reports.
 
     TODO:
+        * add handling for if a user does not have their expensify creds.
         * Ammend user_ids definition to only include active customers.
         * Replace nested for loops with parralelised workers.
     """
@@ -57,3 +60,51 @@ def fetch_reports(self):
                 e = Expense(**e_dict)
                 # Save expense into db table.
                 e.update_and_save(Expense, expense_id=e.expense_id)
+
+    print('Fetch reports complete.')
+
+
+@celery.task(bind=True)
+def calculate_carbon(self):
+    """Calculates carbon for new travel expense reports.
+
+    Saves records to `routes` and `carbon` tables.
+
+    TODO:
+        * Use distance for routes that already exist instead of
+          calculating distance again.
+    """
+    # Get new expense reports that do not have carbon calculates.
+    new = Expense.get_new_expenses()
+
+    if len(new) == 0:
+        return None
+
+    # Format and create additional route columns required.
+    new = Route.create_routes(new)
+    # Calculate distances against routes.
+    distances = Distance.calculate_distance(new)
+
+    # Reduce route cols down to cols of interest and convert to a dictionary.
+    route_df = distances[['origin', 'destination', 'expense_category',
+                          'route_category', 'distance']]
+
+    route_dict = route_df.to_dict('records')
+
+    # Reduce carbon cols down to cols of interest and convert to a dictionary.
+    carbon_df = distances[['expense_id', 'origin', 'destination',
+                           'expense_category', 'distance']]
+    carbon_dict = carbon_df.to_dict('records')
+
+    # Save route records to db.
+    for d in route_dict:
+        r = Route(**d)
+        r.save()
+
+    # Convert distances to carbon and save records to db.
+    for d in carbon_dict:
+        c = Carbon(**d)
+        c.convert_to_carbon()
+        c.save()
+
+    print('Calculate Carbon complete.')

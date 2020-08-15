@@ -3,12 +3,17 @@ import json
 
 import pytest
 import pytz
+import pandas as pd
 from mock import Mock
 
 from config import settings
 from canopact.app import create_app
 from lib.util_datetime import timedelta_months
 from canopact.extensions import db as _db
+from canopact.blueprints.carbon.models.carbon import Carbon
+from canopact.blueprints.carbon.models.expense import Expense
+from canopact.blueprints.carbon.models.route import Route
+from canopact.blueprints.carbon.models.report import Report
 from canopact.blueprints.user.models import User
 from canopact.blueprints.billing.models.credit_card import CreditCard
 from canopact.blueprints.billing.models.coupon import Coupon
@@ -149,6 +154,298 @@ def users(db):
     db.session.commit()
 
     return db
+
+
+@pytest.fixture(scope='function')
+def reports(db):
+    """
+    Create expenses fixtures. They reset per test.
+
+    :param db: Pytest fixture
+    :return: SQLAlchemy database session
+    """
+    db.session.query(Report).delete()
+
+    reports = [
+        {
+            'report_id': 1,
+            'user_id': 1
+        },
+        {
+            'report_id': 2,
+            'user_id': 1
+        },
+    ]
+
+    for report in reports:
+        db.session.add(Report(**report))
+
+    db.session.commit()
+
+    return db
+
+
+@pytest.fixture(scope='function')
+def expenses(db):
+    """
+    Create expenses fixtures. They reset per test.
+
+    :param db: Pytest fixture
+    :return: SQLAlchemy database session
+    """
+    db.session.query(Expense).delete()
+
+    expenses = [
+        {
+            'expense_id': 1,
+            'user_id': 1,
+            'report_id': 1,
+            'expense_type': 'expense',
+            'expense_category': 'Car, Van and Travel Expenses: Air',
+            'expense_comment': "Blackfriars, London; Shoreditch, London;"
+        },
+        {
+            'expense_id': 2,
+            'user_id': 1,
+            'report_id': 1,
+            'expense_type': 'expense',
+            'expense_category': 'Car, Van and Travel Expenses: Bus',
+            'expense_comment': "Blackfriars, London; Shoreditch, London;"
+        },
+        {
+            'expense_id': 3,
+            'user_id': 1,
+            'report_id': 1,
+            'expense_type': 'expense',
+            'expense_category': 'Car, Van and Travel Expenses: Taxi',
+            'expense_comment': "Blackfriars, London; Shoreditch, London;"
+        },
+    ]
+
+    for expense in expenses:
+        db.session.add(Expense(**expense))
+
+    db.session.commit()
+
+    return db
+
+
+@pytest.fixture(scope='function')
+def carbons(db):
+    """
+    Create expenses fixtures. They reset per test.
+
+    :param db: Pytest fixture
+    :return: SQLAlchemy database session
+    """
+    db.session.query(Carbon).delete()
+
+    carbons = [
+        {
+            'expense_id': 1
+        },
+        {
+            'expense_id': 2
+        },
+    ]
+
+    for carbon in carbons:
+        db.session.add(Carbon(**carbon))
+
+    db.session.commit()
+
+    return db
+
+
+@pytest.fixture(scope='function')
+def routes(db):
+    """
+    Create routes fixtures. They reset per test.
+
+    :param db: Pytest fixture
+    :return: SQLAlchemy database session
+    """
+    db.session.query(Route).delete()
+
+    routes = [
+        {
+            'origin': 'Harrow, London',
+            'destination': 'Wembley, London'
+        },
+        {
+            'origin': 'Harrow, London',
+            'destination': 'London Bridge, London'
+        },
+    ]
+
+    for route in routes:
+        db.session.add(Route(**route))
+
+    db.session.commit()
+
+    return db
+
+
+@pytest.fixture
+def expense_instance():
+    exp_attr = {
+        'expense_id': 1,
+        'user_id': 1,
+        'report_id': 1,
+        'expense_type': 'Expense',
+        'expense_category': 'Car, Van and Travel Expenses: Air',
+        'expense_amount': 500.0,
+        'expense_currency': 'GBP',
+        'expense_comment':  "Blackfriars, London; Shoreditch, London;",
+        'expense_converted_amount': None,
+        'expense_created_date': None,
+        'expense_inserted_date': '2020-06-29',
+        'expense_merchant': 'British Airways ',
+        'expense_modified_amount': None,
+        'expense_modified_created_date': None,
+        'expense_modified_merchant': None,
+        'expense_unit_count': None,
+        'expense_unit_rate': None,
+        'expense_unit_unit': None
+    }
+    return Expense(**exp_attr)
+
+
+@pytest.fixture
+def carbon_instance():
+    carbon_attr = {
+        'id': 1,
+        'expense_id': 1
+    }
+    return Carbon(**carbon_attr)
+
+
+@pytest.fixture
+def report_instance():
+    attr = {
+        'report_id': 1,
+        'user_id': 1
+    }
+    return Report(**attr)
+
+
+@pytest.fixture
+def user_instance():
+    attr = {
+        'id': 1,
+    }
+    return User(**attr)
+
+
+@pytest.fixture
+def distance_df():
+
+    url1 = ("https://maps.googleapis.com/maps/api/distancematrix/"
+            "json?units=metric&mode=driving&origins=Harrow, London&"
+            "destinations=Wembley, London&key=fake123")
+
+    url2 = ("https://maps.googleapis.com/maps/api/distancematrix/"
+            "json?units=metric&mode=driving&origins=Nou Camp,"
+            " Barcelona&destinations=St James's Park, Newcastle&key=fake123")
+
+    data = {
+        'expense_id': [1, 2],
+        'origin': ['Harrow, London', "Nou Camp, Barcelona"],
+        'destination': ['Wembley, London', "St James's Park, Newcastle"],
+        'url': [url1, url2]
+    }
+
+    return pd.DataFrame(data)
+
+
+@pytest.fixture
+def air_df():
+
+    url1 = "https://www.distance24.org/route.json?stops=Hamburg|Berlin"
+
+    url2 = ("https://www.distance24.org/route.json?stops=London Heathrow"
+            "|London Gatwick")
+
+    data = {
+        'expense_id': [1, 2],
+        'origin': ['Hamburg', 'London Heathrow'],
+        'destination': ['Berlin', 'London Gatwick'],
+        'url': [url1, url2]
+    }
+
+    return pd.DataFrame(data)
+
+
+@pytest.fixture(scope="function")
+def mock_ground_api_response():
+
+    url1 = ("https://maps.googleapis.com/maps/api/distancematrix/"
+            "json?units=metric&mode=driving&origins=Harrow, London&"
+            "destinations=Wembley, London&key=fake123")
+
+    url2 = ("https://maps.googleapis.com/maps/api/distancematrix/"
+            "json?units=metric&mode=driving&origins=Nou Camp,"
+            " Barcelona&destinations=St James's Park, Newcastle&key=fake123")
+
+    class MockGoogleApiResponse():
+        """Mock response for the Google Distance Matrix API"""
+        def __init__(self, *args, **kwargs):
+            self.url = args[0]
+
+        def json(self):
+            d1 = (
+                {
+                    'destination_addresses': ['Wembley, UK'],
+                    'origin_addresses': ['Harrow, UK'],
+                    'rows': [
+                                {'elements': [
+                                    {'distance': {
+                                        'text': '5.6 km',
+                                        'value': 5611
+                                    },
+                                     'duration': {
+                                        'text': '11 mins',
+                                        'value': 670
+                                    }, 'status': 'OK'}
+                                    ]}
+                            ],
+                    'status': 'OK'
+                }
+            )
+
+            d2 = {
+                "destination_addresses": [
+                    "St James Park, Newcastle upon Tyne, UK"
+                ],
+                "origin_addresses": [
+                    "C. d'Arístides Maillol, 12, 08028 Barcelona, Spain"
+                ],
+                "rows": [
+                    {
+                        "elements": [
+                            {
+                             "distance": {
+                                "text": "1,934 km",
+                                "value": 1934300
+                             },
+                             "duration": {
+                                "text": "19 hours 26 mins",
+                                "value": 69939
+                             },
+                             "status": "OK"
+                            }
+                        ]
+                    }
+                ],
+                "status": "OK"
+                }
+
+            if self.url == url1:
+                return d1
+            if self.url == url2:
+                return d2
+
+    return MockGoogleApiResponse
 
 
 @pytest.fixture(scope='function')

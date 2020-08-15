@@ -38,9 +38,9 @@ json_template = """
                     <#assign mod_amt_seq += [expense.modifiedAmount]>
                     <#assign mod_created_seq += [expense.modifiedCreated]>
                     <#assign mod_merch_seq += [expense.modifiedMerchant]>
-                    <#assign unit_count_seq += [expense.units.count	]>
+                    <#assign unit_count_seq += [expense.units.count]>
                     <#assign unit_rate_seq += [expense.units.rate]>
-                    <#assign unit_unit_seq += [expense.units.rate]>
+                    <#assign unit_unit_seq += [expense.units.unit]>
                 </#list>
                 "expense_id": [<#list id_seq as i>"${i}"<#sep>, </#list>],
                 "expense_type": [<#list type_seq as i>"${i}"<#sep>, </#list>],

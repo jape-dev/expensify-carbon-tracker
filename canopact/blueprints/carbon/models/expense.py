@@ -1,82 +1,18 @@
-"""Models for Report and Expense.
+"""Models for Expense.
 
 Author: James Patten
 First Build: May 2020
 
 Examples:
-    from canopact.blueprints.carbon.models import Report
-    from canopact.blueprints.carbon.models import Expense
-    r = Report()
+    from canopact.blueprints.carbon.models.expense import Expense
     e = Expense()
 
 """
 from canopact.extensions import db
+from canopact.blueprints.carbon.models.carbon import Carbon
+from sqlalchemy import exists
+import pandas as pd
 from lib.util_sqlalchemy import ResourceMixin
-from vendors import expensify
-
-
-class Report(ResourceMixin, db.Model):
-    __tablename__ = 'reports'
-
-    report_id = db.Column(db.Integer, primary_key=True)
-
-    # Relationships.
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id',
-                                                  onupdate='CASCADE',
-                                                  ondelete='CASCADE'),
-                        index=True, nullable=False)
-
-    def __init__(self, **kwargs):
-        # Call Flask-SQLAlchemy's constructor.
-        super(Report, self).__init__(**kwargs)
-
-    @staticmethod
-    def fetch_expensify_reports(User, user_ids):
-        """Fetch Expensify reports.
-
-        Args:
-            user_ids (list): list of user ids.
-
-        Returns:
-            dict: user_id and report list as key value pairs.
-
-        """
-        user_reports = {}
-        for uid in user_ids:
-            user = User.query.get(uid)
-
-            # Get user Expensify API credentials.
-            partnerUserID = user.partnerUserID
-            partnerUserSecret = user.partnerUserSecret
-
-            # Get all reports from Expensify Integration Server.
-            report_list = expensify.main(partnerUserID, partnerUserSecret)
-
-            # Append id as key and report list as value in dict.
-            user_reports[uid] = report_list
-
-        return user_reports
-
-    @staticmethod
-    def parse_report_from_list(reports, r_num, user_id=None):
-        """Parse and return the expenses fields from a report.
-
-        Args:
-            reports (list): list of reports.
-            r_num (int): positional index of report to parse.
-            user_id (int): id of user.
-
-        Returns:
-            dict: keys value pairs of report fields / information.
-        """
-        data = reports[r_num]
-
-        report = {
-            'report_id': data['report_id'],
-            'user_id': user_id
-        }
-
-        return report
 
 
 class Expense(ResourceMixin, db.Model):
@@ -110,11 +46,13 @@ class Expense(ResourceMixin, db.Model):
     expense_modified_merchant = db.Column(db.String(100))
     expense_unit_count = db.Column(db.Integer())
     expense_unit_rate = db.Column(db.Float())
-    expense_unit_unit = db.Column(db.Float())
+    expense_unit_unit = db.Column(db.String(10))
+    travel_expense = db.Column(db.Integer())
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(Expense, self).__init__(**kwargs)
+        self.travel_expense = self.is_travel_expense()
 
     @staticmethod
     def parse_expenses_from_list(reports, r_num, user_id=None):
@@ -179,4 +117,67 @@ class Expense(ResourceMixin, db.Model):
         # Convert into a dictionary.
         dict_pairs = dict(indexed_pairs)
 
+        # Replace empty values with None.
+        for k, v in dict_pairs.items():
+            if v == '':
+                dict_pairs[k] = None
+
         return dict_pairs
+
+    def is_travel_expense(self, categories=[
+                                    'Car, Van and Travel Expenses: Air',
+                                    'Car, Van and Travel Expenses: Bus',
+                                    'Car, Van and Travel Expenses: Car Hire',
+                                    'Car, Van and Travel Expenses: Fuel',
+                                    'Car, Van and Travel Expenses: Taxi',
+                                    'Car, Van and Travel Expenses: Train']):
+        """Checks whether expense is in one of the required `categories`.
+
+        Args:
+            categories (list): valid travel expense categories.
+
+        Returns:
+            travel_expense (int): 1 if a travel expense, 0 otherwise.
+
+        """
+        if self.expense_category in categories:
+            travel_expense = 1
+        else:
+            travel_expense = 0
+
+        return travel_expense
+
+    @staticmethod
+    def get_new_expenses():
+        """Retrieve expenses that do not yet have carbon calculated.
+
+        Checks to see if expense id exists in the carbon table.
+
+        Returns:
+            ids (list): expense ids which are not in the carbon table.
+
+        """
+        # Get expenses that are travel expenses but not already in
+        # the `carbon` table.
+        expenses = db.session.query(Expense) \
+                     .filter(Expense.travel_expense == 1) \
+                     .filter(~exists().where(
+                         Carbon.expense_id == Expense.expense_id))
+
+        df = pd.DataFrame(columns=['expense_id', 'expense_type',
+                                   'expense_category', 'expense_comment',
+                                   'expense_unit_count', 'expense_unit_unit'])
+
+        for expense in expenses:
+            row = {
+                'expense_id': expense.expense_id,
+                'expense_type': expense.expense_type,
+                'expense_category': expense.expense_category,
+                'expense_comment': expense.expense_comment,
+                'expense_unit_count': expense.expense_unit_count,
+                'expense_unit_unit': expense.expense_unit_unit
+            }
+
+            df = df.append(row, ignore_index=True)
+
+        return df

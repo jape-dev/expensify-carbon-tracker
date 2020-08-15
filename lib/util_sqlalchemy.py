@@ -124,16 +124,16 @@ class ResourceMixin(object):
         TODO:
             Write a test.
         """
-        # Check if id is already in the reports table.
+        # Check if id is already in the table.
         exists = db.session.query(
             db.session.query(model).filter_by(**kwargs).exists()
         ).scalar()
 
         if exists:
-            # Update the already existing report.
+            # Update the already existing record.
             db.session.commit()
         else:
-            # Add the new report to the table.
+            # Add the new record to the table.
             self.save()
 
     def delete(self):

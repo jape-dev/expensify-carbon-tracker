@@ -194,8 +194,7 @@ class Expensify():
                            float_cols=["expense_amount",
                                        "expense_converted_amount",
                                        "expense_modified_amount",
-                                       "expense_unit_rate",
-                                       "expense_unit_unit"],
+                                       "expense_unit_rate"],
                            int_cols=["expense_id",
                                      "expense_unit_count"]):
         """Converts values to the required datatype

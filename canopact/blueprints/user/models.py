@@ -17,7 +17,7 @@ from canopact.blueprints.billing.models.credit_card import CreditCard
 from canopact.blueprints.billing.models.subscription import Subscription
 from canopact.blueprints.billing.models.invoice import Invoice
 from canopact.blueprints.bet.models.bet import Bet
-from canopact.blueprints.carbon.models import Report
+from canopact.blueprints.carbon.models.report import Report
 from canopact.extensions import db
 
 

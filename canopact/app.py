@@ -100,6 +100,7 @@ def create_app(settings_override=None):
     extensions(app)
     authentication(app, User)
     locale(app)
+    app.jinja_env.globals.update(zip=zip)
 
     return app
 

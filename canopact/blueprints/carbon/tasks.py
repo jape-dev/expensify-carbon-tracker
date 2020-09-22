@@ -19,6 +19,7 @@ from canopact.blueprints.carbon.models.report import Report
 from canopact.blueprints.carbon.models.route import Route, Distance
 from canopact.blueprints.user.models import User
 from canopact.extensions import db
+import pandas as pd
 
 
 celery = create_celery_app()
@@ -77,17 +78,22 @@ def calculate_carbon(self):
     # Get new expense reports that do not have carbon calculates.
     new = Expense.get_new_expenses()
 
-    if len(new) == 0:
-        return None
-
     # Format and create additional route columns required.
     new = Route.create_routes(new)
+
+    # If no new routes from expenses or ammended routes.
+    if new is None:
+        return None
+
     # Calculate distances against routes.
     distances = Distance.calculate_distance(new)
 
+    # Convert NaNs to nulls to be compaitible to SQL db.
+    distances = distances.where(pd.notnull(distances), None)
+
     # Reduce route cols down to cols of interest and convert to a dictionary.
-    route_df = distances[['origin', 'destination', 'expense_category',
-                          'route_category', 'distance']]
+    route_df = distances[['expense_id', 'expense_category', 'route_category',
+                          'origin', 'destination', 'invalid', 'distance']]
 
     route_dict = route_df.to_dict('records')
 
@@ -99,12 +105,12 @@ def calculate_carbon(self):
     # Save route records to db.
     for d in route_dict:
         r = Route(**d)
-        r.save()
+        r.update_and_save(Route, expense_id=r.expense_id)
 
     # Convert distances to carbon and save records to db.
     for d in carbon_dict:
         c = Carbon(**d)
         c.convert_to_carbon()
-        c.save()
+        c.update_and_save(Carbon, expense_id=d['expense_id'])
 
     print('Calculate Carbon complete.')

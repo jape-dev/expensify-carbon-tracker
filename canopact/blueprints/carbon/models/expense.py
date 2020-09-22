@@ -10,6 +10,7 @@ Examples:
 """
 from canopact.extensions import db
 from canopact.blueprints.carbon.models.carbon import Carbon
+from canopact.blueprints.carbon.models.route import Route
 from sqlalchemy import exists
 import pandas as pd
 from lib.util_sqlalchemy import ResourceMixin
@@ -30,6 +31,9 @@ class Expense(ResourceMixin, db.Model):
                                                        onupdate='CASCADE',
                                                        ondelete='CASCADE'),
                           index=True, nullable=False)
+
+    routes = db.relationship(Route, backref="parent",
+                             passive_deletes=True)
 
     # Expense columns.
     expense_type = db.Column(db.String(50))
@@ -179,5 +183,8 @@ class Expense(ResourceMixin, db.Model):
             }
 
             df = df.append(row, ignore_index=True)
+
+        if len(df) == 0:
+            df = None
 
         return df

@@ -26,6 +26,8 @@ class Report(ResourceMixin, db.Model):
                                                   onupdate='CASCADE',
                                                   ondelete='CASCADE'),
                         index=True, nullable=False)
+    # Columns.
+    report_name = db.Column(db.String(100))
 
     expenses = db.relationship(Expense, backref="parent",
                                passive_deletes=True)
@@ -77,7 +79,8 @@ class Report(ResourceMixin, db.Model):
 
         report = {
             'report_id': data['report_id'],
-            'user_id': user_id
+            'user_id': user_id,
+            'report_name': data['report_name']
         }
 
         return report

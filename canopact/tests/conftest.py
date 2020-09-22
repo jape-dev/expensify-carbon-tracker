@@ -269,10 +269,12 @@ def routes(db):
 
     routes = [
         {
+            'expense_id': 1,
             'origin': 'Harrow, London',
             'destination': 'Wembley, London'
         },
         {
+            'expense_id': 2,
             'origin': 'Harrow, London',
             'destination': 'London Bridge, London'
         },

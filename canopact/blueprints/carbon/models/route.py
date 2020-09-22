@@ -18,10 +18,19 @@ class Route(ResourceMixin, db.Model):
     __tablename__ = 'routes'
 
     id = db.Column(db.Integer, primary_key=True)
-    origin = db.Column(db.String(100))
-    destination = db.Column(db.String(100))
+
+    # Relationships.
+    expense_id = db.Column(db.BigInteger, db.ForeignKey('expenses.expense_id',
+                                                        onupdate='CASCADE',
+                                                        ondelete='CASCADE'),
+                           index=True, nullable=False)
+
+    # Route columns.
     expense_category = db.Column(db.String(100))
     route_category = db.Column(db.String(100))
+    origin = db.Column(db.String(100))
+    destination = db.Column(db.String(100))
+    invalid = db.Column(db.Integer())
     distance = db.Column(db.Float())
 
     def __init__(self, **kwargs):
@@ -42,9 +51,12 @@ class Route(ResourceMixin, db.Model):
             tuple: origin and destination strings.
 
         """
-        if ';' not in description or description.count(';') != 2:
-            raise ValueError("Description incorrectly formatted. Must be: "
-                             "<origin>; <destination>;")
+        try:
+            if ';' not in description or description.count(';') != 2:
+                raise ValueError("Description incorrectly formatted. Must be: "
+                                 "<origin>; <destination>;")
+        except TypeError as e:
+            raise TypeError(e)
 
         # Split out the origin and destination into seperate strings.
         route = description.split(';')
@@ -111,14 +123,50 @@ class Route(ResourceMixin, db.Model):
             raise ValueError(f"{category} not in {air_cats} or {ground_cats}")
 
     @staticmethod
-    def create_routes(df, comment_col='expense_comment',
+    def get_ammended_routes():
+        """Get routes that have had their origin/destination updated.
+
+        These routes still need to have a distance calculated for them.
+
+        """
+        routes = db.session.query(Route) \
+                   .filter(Route.origin.isnot(None)) \
+                   .filter(Route.destination.isnot(None)) \
+                   .filter(Route.distance.is_(None))
+
+        df = pd.DataFrame(columns=['id', 'expense_id', 'expense_category'
+                                   'route_category', 'origin', 'destination',
+                                   'exists'])
+
+        for route in routes:
+            row = {
+                'id': route.id,
+                'expense_id': route.expense_id,
+                'expense_category': route.expense_category,
+                'route_category': route.route_category,
+                'origin': route.origin,
+                'destination': route.destination,
+                'exists': False
+            }
+
+            df = df.append(row, ignore_index=True)
+
+        if len(df) == 0:
+            df = None
+
+        return df
+
+    @staticmethod
+    def create_routes(df=None, comment_col='expense_comment',
                       category_col='expense_category',
-                      type_col='expense_type'):
+                      type_col='expense_type', ammend=True):
         """Wrapper function to format route columns.
 
         Args:
             comment_col (str): column name that contains expense columns.
             category_col (str): column name that contains expense categories.
+            ammend (bool): if True, append routes that have been ammended to
+                the DataFrame.
 
         Returns:
             df (pandas.DataFrame): dataframe containing new columns: origin,
@@ -133,16 +181,36 @@ class Route(ResourceMixin, db.Model):
             if row[type_col] != 'expense':
                 row['route_category'] = 'unit'
             else:
-                org, dst = Route.split_orig_dest(row[comment_col])
+                try:
+                    org, dst = Route.split_orig_dest(row[comment_col])
+                except(ValueError, TypeError):
+                    org, dst = None, None
                 row['origin'] = org
                 row['destination'] = dst
                 exists = Route.check_route_exists(org, dst)
                 row['exists'] = exists
                 row['route_category'] = Route.get_route_type(row[category_col])
+                row['distance'] = None
 
             return row
 
-        df = df.apply(lambda row: apply_route_methods(row), axis=1)
+        if df is not None:
+            df = df.apply(lambda row: apply_route_methods(row), axis=1)
+
+        if ammend:
+            # Append on the ammended routes to the new routes.
+            ammended = Route.get_ammended_routes()
+        else:
+            ammended = None
+
+        if df is not None and ammended is not None:
+            df = df.append(ammended, ignore_index=True)
+        elif df is None and ammended is not None:
+            df = ammended
+        elif df is None and ammended is None:
+            df = None
+        else:
+            df = df
 
         return df
 
@@ -178,10 +246,14 @@ class Distance():
 
         def build_url(row):
             """Helper function to build urls."""
-            request = ''.join([url, f'units={unit}', f'&mode={mode}',
-                               f'&origins={row[orig_col]}',
-                               f'&destinations={row[dest_col]}', f'&key={key}']
-                              )
+
+            if row[orig_col] is None or row[dest_col] is None:
+                request = None
+            else:
+                request = ''.join([url, f'units={unit}', f'&mode={mode}',
+                                   f'&origins={row[orig_col]}',
+                                   f'&destinations={row[dest_col]}',
+                                   f'&key={key}'])
 
             return request
 
@@ -207,14 +279,17 @@ class Distance():
 
         """
         urls = df[url_col].tolist()
-        responses = [requests.get(u) for u in urls]
-        jsons = [r.json() for r in responses]
+        responses = [requests.get(u) if u is not None else None for u in urls]
+        jsons = [r.json() if r is not None else None for r in responses]
         df['json'] = np.array(jsons)
 
         def parse_json(row):
             """Parses responses from the distance matrix api"""
 
             json = row['json']
+
+            if json is None:
+                return None
 
             if json['status'] == 'OK':
                 element = json['rows'][0]['elements'][0]
@@ -225,13 +300,12 @@ class Distance():
 
             if element['status'] == 'OK':
                 distance = element['distance']['value']
+                # Convert from metres into km.
+                distance = distance / 1000
             else:
                 print(f"Distance Matrix API request failed with status code:"
                       f"{element['status']}")
                 distance = None
-
-            # Convert from metres into km.
-            distance = distance / 1000
 
             return distance
 
@@ -259,8 +333,11 @@ class Distance():
 
         def build_url(row):
             """Helper function to build urls."""
-            stops = f"{row[orig_col]}|{row[dest_col].lstrip()}"
-            request = ''.join([url, f"stops={stops}"])
+            if row[orig_col] is None or row[dest_col] is None:
+                request = None
+            else:
+                stops = f"{row[orig_col]}|{row[dest_col].lstrip()}"
+                request = ''.join([url, f"stops={stops}"])
 
             return request
 
@@ -281,14 +358,17 @@ class Distance():
 
         """
         urls = df[url_col].tolist()
-        responses = [requests.get(u) for u in urls]
-        jsons = [r.json() for r in responses]
+        responses = [requests.get(u) if u is not None else None for u in urls]
+        jsons = [r.json() if r is not None else None for r in responses]
         df['json'] = np.array(jsons)
 
         def parse_json(row):
             """Parses responses from the distance24 api"""
 
             json = row['json']
+
+            if json is None:
+                return None
 
             if len(json['distances']) > 0:
                 distance = json['distance']
@@ -344,14 +424,13 @@ class Distance():
 
         """
         cols = list(df)
-        cols.append('distance')
 
         # Split dataframe into unit expenses, ground expenses and air expenses.
         unit = df[df[category_col] == 'unit']
         grnd = df[df[category_col] == 'ground']
         air = df[df[category_col] == 'air']
 
-        print(f"{len(df)} expenses retrived.  {len(unit)} unit, {len(grnd)}"
+        print(f"{len(df)} routes retrived. {len(unit)} unit, {len(grnd)}"
               f" ground and {len(air)} air.")
 
         if len(unit) > 0:
@@ -362,16 +441,26 @@ class Distance():
         if len(grnd) > 0:
             urls = Distance.get_ground_urls(grnd)
             ground_distance = Distance.calculate_ground_distance(urls)
+            # Remove unrequired columns.
+            ground_distance.drop(['url', 'json'], axis=1, errors='ignore',
+                                 inplace=True)
         else:
             ground_distance = pd.DataFrame(columns=cols, index=[0])
 
         if len(air) > 0:
             air_urls = Distance.get_air_urls(air)
             air_distance = Distance.calculate_air_distance(air_urls)
+            # Remove unrequired columns.
+            air_distance.drop(['url', 'json'], axis=1, errors='ignore',
+                              inplace=True)
         else:
             air_distance = pd.DataFrame(columns=cols, index=[0])
 
         distances = unit_distance.append([ground_distance, air_distance])
+
+        # Add the invalid marker for any routes that don't have a distance.
+        distances['invalid'] = [1 if d is None else 0 for d in
+                                distances['distance']]
 
         # Remove any rows that contain a null id.
         distances = distances[distances[category_col].notna()]

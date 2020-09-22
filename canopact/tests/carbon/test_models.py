@@ -106,7 +106,8 @@ class TestRoute():
             'origin': 'Blackfriars, London',
             'destination': ' Shoreditch, London',
             'exists': False,
-            'route_category': 'air'
+            'route_category': 'air',
+            'distance': None
         }
 
         expense = pd.DataFrame(cols, index=[0])

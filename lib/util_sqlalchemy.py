@@ -1,5 +1,6 @@
 import datetime
 
+import sqlalchemy
 from sqlalchemy import DateTime
 from sqlalchemy.types import TypeDecorator
 
@@ -121,16 +122,21 @@ class ResourceMixin(object):
         Example:
             self.update_and_save(Report, report_id=653)
 
-        TODO:
-            Write a test.
         """
+        # Get the record.
+        row = db.session.query(model).filter_by(**kwargs)
         # Check if id is already in the table.
-        exists = db.session.query(
-            db.session.query(model).filter_by(**kwargs).exists()
-        ).scalar()
+        exists = db.session.query(row.exists()).scalar()
 
         if exists:
             # Update the already existing record.
+            attrs = self.__dict__.copy()
+            try:
+                row.update(attrs)
+            except sqlalchemy.exc.InvalidRequestError:
+                attrs.pop('_sa_instance_state', None)
+                row.update(attrs)
+
             db.session.commit()
         else:
             # Add the new record to the table.

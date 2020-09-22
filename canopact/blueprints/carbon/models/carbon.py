@@ -2,6 +2,9 @@
 
 Calculates carbon emissions from Expensify report and expense data.
 
+TODO:
+    * rename co2 column to co2e.
+
 """
 
 from canopact.extensions import db
@@ -172,6 +175,10 @@ class Carbon(ResourceMixin, db.Model):
             distance = self.distance
         if category is None:
             category = self.expense_category
+
+        # No distance available if the route is invalid.
+        if distance is None:
+            return None
 
         if category == 'Car, Van and Travel Expenses: Air':
             co2 = Carbon.convert_to_carbon_air(distance, **kwargs)

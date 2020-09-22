@@ -75,6 +75,11 @@ body {
   position: relative;
 }
 
+.hide-label label{
+  display: none;
+}
+
+
 /* Bootstrap overrides
 -------------------------------------------------- */
 label {

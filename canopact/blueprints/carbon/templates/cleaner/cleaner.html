@@ -1,0 +1,66 @@
+{% extends 'layouts/app.html' %}
+{% import 'macros/items.html' as items %}
+{% import 'macros/form.html' as f with context %}
+
+{% block title %}Canopact - Route Cleaner{% endblock %}
+
+{% block body %}
+  {{ f.search('carbon.cleaner') }}
+
+  {% if routes.count() == 0 %}
+    <h3>No results found</h3>
+    {% if request.args.get('q') %}
+      <p>Try limiting or removing your search terms.</p>
+    {% else %}
+      <p>There are no routes present.</p>
+    {% endif %}
+  {% else %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th class="col-header">
+            {{ items.sort('expense_id', 'Expense Id') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('report_name', 'Report Name') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('expense_merchant', 'Expense Merchant') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('expense_comment', 'Expense Comment') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('expense_created_date', 'Expense Created Date') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('origin', 'Origin') }}
+          </th>
+          <th class="col-header">
+            {{ items.sort('destination', 'Destination') }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for route in routes %}
+          <tr>
+            <td>{{ route.expense_id }}</td>
+            <td>{{ route.report_name }}</td>
+            <td>{{ route.expense_merchant }}</td>
+            <td>{{ route.expense_comment }}</td>
+            <td>{{ route.expense_created_date }}</td>
+            <td>{{ route.origin }}</td>
+            <td>{{ route.destination }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="col-md-6">
+      <a href="{{ url_for('carbon.routes_edit') }}" class="btn btn-primary btn-block">
+        Edit
+      </a>
+    </div>
+
+  {% endif %}
+{% endblock %}

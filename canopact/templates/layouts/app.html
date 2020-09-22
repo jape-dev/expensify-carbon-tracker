@@ -26,14 +26,14 @@
             </li>
             {% else %}
             <li>
-              <a href="{{ url_for('bet.place_bet') }}">
+              <a href="{{ url_for('carbon.dashboard') }}">
                 <span class="label label-primary">Carbon Calculator</span>
               </a>
             </li>
             {% endif %}
             <li>
-              <a href="{{ url_for('carbon.update_reports') }}">
-                <span class="label label-default">Test Calculator</span>
+              <a href="{{ url_for('carbon.cleaner') }}">
+                <span class="label label-default">Route Cleaner</span>
               </a>
             </li>
           {% else %}

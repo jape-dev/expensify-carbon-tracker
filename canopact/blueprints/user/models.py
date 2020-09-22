@@ -3,7 +3,7 @@ from collections import OrderedDict
 from hashlib import md5
 
 import pytz
-from flask import current_app
+from flask import current_app, url_for
 from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -17,7 +17,7 @@ from canopact.blueprints.billing.models.credit_card import CreditCard
 from canopact.blueprints.billing.models.subscription import Subscription
 from canopact.blueprints.billing.models.invoice import Invoice
 from canopact.blueprints.bet.models.bet import Bet
-from canopact.blueprints.carbon.models import Report
+from canopact.blueprints.carbon.models.report import Report
 from canopact.extensions import db
 
 
@@ -48,6 +48,9 @@ class User(UserMixin, ResourceMixin, db.Model):
     email = db.Column(db.String(255), unique=True, index=True, nullable=False,
                       server_default='')
     password = db.Column(db.String(128), nullable=False, server_default='')
+    email_confirmation_sent_on = db.Column(AwareDateTime(), nullable=True)
+    email_confirmed = db.Column(db.Boolean(), nullable=True, default=False)
+    email_confirmed_on = db.Column(AwareDateTime(), nullable=True)
 
     # Billing.
     name = db.Column(db.String(128), index=True)
@@ -79,6 +82,10 @@ class User(UserMixin, ResourceMixin, db.Model):
         super(User, self).__init__(**kwargs)
 
         self.password = User.encrypt_password(kwargs.get('password', ''))
+        self.email_confirmation_sent_on = None
+        self.email_confirmed = False
+        self.email_confirmed_on = None
+
         self.coins = 100
 
     @classmethod
@@ -138,6 +145,7 @@ class User(UserMixin, ResourceMixin, db.Model):
         :type identity: str
         :return: User instance
         """
+
         u = User.find_by_identity(identity)
         reset_token = u.serialize_token()
 
@@ -145,6 +153,31 @@ class User(UserMixin, ResourceMixin, db.Model):
         from canopact.blueprints.user.tasks import (
             deliver_password_reset_email)
         deliver_password_reset_email.delay(u.id, reset_token)
+
+        return u
+
+    @classmethod
+    def initialize_email_confirmation(cls, identity):
+        """
+        Generate a token to authenticate email when registering.
+
+        :param identity: User e-mail address or username
+        :type identity: str
+        :return: User instance
+        """
+
+        u = User.find_by_identity(identity)
+        auth_token = u.get_auth_token()
+
+        confirm_url = url_for(
+            'user.confirm_email',
+            token=auth_token,
+            _external=True)
+
+        # This prevents circular imports.
+        from canopact.blueprints.user.tasks import (
+            deliver_confirmation_email)
+        deliver_confirmation_email.delay(u.id, confirm_url)
 
         return u
 

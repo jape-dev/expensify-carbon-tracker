@@ -1,40 +1,98 @@
-from canopact.blueprints.carbon.models import Report
-from canopact.blueprints.carbon.models import Expense
+"""Views for Canopact carbon dashboard."""
+
+from canopact.blueprints.carbon.models.expense import Expense
+from canopact.blueprints.carbon.models.report import Report
+from canopact.blueprints.carbon.models.route import Route
+from canopact.blueprints.carbon.forms import (
+    SearchForm,
+    RouteForm,
+    JourneysForm
+)
+from canopact.extensions import db
 from flask import (
     Blueprint,
-    render_template)
-from flask_login import current_user
+    flash,
+    redirect,
+    render_template,
+    url_for
+)
 
 
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
-
+# Dashboard -------------------------------------------------------------------
 @carbon.route('/carbon', methods=['GET', 'POST'])
-def update_reports():
-    """Updates user's reports information."""
-    # Prevent circular import.
-    from canopact.blueprints.carbon.tasks import fetch_reports
+def dashboard():
+    """Renders template for the carbon dashboard"""
+    return render_template('dashboard.html',
+                           report_id=5)
 
-    if current_user.is_authenticated:
-        user_id = current_user.id
-        # reports = Report(user_id=user_id)
 
-        # Fetch reports frome expensify integration server.
-        result = fetch_reports.delay(user_id)
-        report_list = result.get()
+# Routes Cleaner --------------------------------------------------------------
+def get_routes():
+    """Fetches expense records that do not have a valid origin/destination."""
+    routes = db.session.query(Route.id,
+                              Route.expense_id,
+                              Report.report_name,
+                              Expense.expense_merchant,
+                              Expense.expense_comment,
+                              Expense.expense_created_date) \
+        .join(Expense, Route.expense_id == Expense.expense_id) \
+        .join(Report, Expense.report_id == Report.report_id) \
+        .filter(Route.route_category != 'unit') \
+        .filter((Route.origin.is_(None) & Route.destination.is_(None)) |
+                (Route.invalid == 1)) \
+        .distinct()
 
-        # Parse reports
-        reports = Report.parse_report_from_list(report_list, 1,
-                                                user_id)
-        report = Report(**reports)
-        report.save_and_update_report()
+    return routes
 
-        all_expenses = Expense.parse_expenses_from_list(report_list, 1,
-                                                        user_id)
-        first_expense = Expense.parse_expense_from_report(all_expenses, 0)
 
-        expense = Expense(**first_expense)
-        expense.save_and_update_expense()
+@carbon.route('/carbon/cleaner')
+def cleaner():
+    """Retrieves all expenses with an invalid and renders cleaner template."""
+    search_form = SearchForm()
+    routes = get_routes()
 
-    return render_template('carbon/carbon_dashboard.html',
-                           report_count=5)
+    return render_template('cleaner/cleaner.html', form=search_form,
+                           routes=routes)
+
+
+@carbon.route('/carbon/cleaner/edit', methods=['GET', 'POST'])
+def routes_edit():
+    """Opens editor mode to let user enter in valid origin and destination.
+
+    """
+    routes = get_routes()
+    journeys_form = JourneysForm()
+
+    if journeys_form.validate_on_submit():
+        for i, entry in enumerate(journeys_form.journeys.entries):
+            id = journeys_form.ids[i]
+            r = Route.query.get(id)
+
+            if entry.data['origin'] == '':
+                origin = None
+            else:
+                origin = entry.data['origin']
+
+            if entry.data['destination'] == '':
+                destination = None
+            else:
+                destination = entry.data['destination']
+
+            r.origin = origin
+            r.destination = destination
+            r.update_and_save(Route, id=id)
+
+        flash('Routes has been saved successfully.', 'success')
+        return redirect(url_for('carbon.cleaner'))
+    else:
+        for route in routes:
+            route_form = RouteForm()
+            route_form.origin = None
+            route_form.destination = None
+            journeys_form.ids.append(route.id)
+            journeys_form.journeys.append_entry(route_form)
+
+    return render_template('cleaner/edit.html', form=journeys_form,
+                           routes=routes)

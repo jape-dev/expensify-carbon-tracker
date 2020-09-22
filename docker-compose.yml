@@ -10,6 +10,18 @@ services:
     ports:
       - '5432:5432'
 
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+        PGADMIN_DEFAULT_EMAIL: jamespatten1996@gmail.com
+        PGADMIN_DEFAULT_PASSWORD: devpassword
+    volumes:
+        - pgadmin:/var/lib/pgadmin/data
+    ports:
+        - "8001:80"
+    logging:
+        driver: none
+
   redis:
     image: 'redis:3.0-alpine'
     command: redis-server --requirepass devpassword
@@ -31,12 +43,22 @@ services:
 
   celery:
     build: .
-    command: celery worker -B -l info -A canopact.blueprints.contact.tasks 
+    command: celery worker -l info -A canopact.blueprints.contact.tasks 
     env_file:
       - '.env'
     volumes:
       - '.:/canopact'
 
+  celery_beat:
+    build: .
+    command: celery beat -l info -A canopact.blueprints.contact.tasks -S redbeat.RedBeatScheduler 
+    env_file:
+    - '.env'
+    volumes:
+    - '.:/canopact'
+
+
 volumes:
   postgres:
   redis:
+  pgadmin:

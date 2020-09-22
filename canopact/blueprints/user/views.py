@@ -1,4 +1,5 @@
 from flask import (
+    current_app,
     Blueprint,
     redirect,
     request,
@@ -11,6 +12,7 @@ from flask_login import (
     current_user,
     logout_user)
 
+from lib.util_datetime import tzware_datetime
 from lib.safe_next_url import safe_next_url
 from canopact.blueprints.user.decorators import anonymous_required
 from canopact.blueprints.user.models import User
@@ -22,7 +24,11 @@ from canopact.blueprints.user.forms import (
     WelcomeForm,
     UpdateCredentialsForm,
     ExpensifyAPICredentialsForm,
-    UpdateLocaleForm)
+    UpdateLocaleForm,
+    ResendEmailForm)
+import itsdangerous
+from itsdangerous import URLSafeTimedSerializer
+
 
 user = Blueprint('user', __name__, template_folder='templates')
 
@@ -121,8 +127,10 @@ def signup():
         u.save()
 
         if login_user(u):
-            flash('Awesome, thanks for signing up!', 'success')
-            return redirect(url_for('user.welcome'))
+            User.initialize_email_confirmation(request.form.get('email'))
+            flash('Thanks for registering!  Please check your email to '
+                  ' confirm your email address.', 'success')
+            return redirect(url_for('user.awaiting'))
 
     return render_template('user/signup.html', form=form)
 
@@ -144,6 +152,39 @@ def welcome():
         return redirect(url_for('user.settings'))
 
     return render_template('user/welcome.html', form=form)
+
+
+@user.route('/awaiting', methods=['GET', 'POST'])
+def awaiting():
+    form = ResendEmailForm()
+    if form.validate_on_submit():
+        u = User.initialize_email_confirmation(request.form.get('identity'))
+        flash('An email has been sent to {0}.'.format(u.email), 'success')
+    return render_template('user/begin_email_confirmation.html', form=form)
+
+
+@user.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        confirm_serializer = URLSafeTimedSerializer(
+            current_app.config['SECRET_KEY'])
+        email = confirm_serializer.loads(token, max_age=3600)
+    except itsdangerous.exc.BadTimeSignature as e:
+        print(e)
+        flash('The confirmation link is invalid or has expired.', 'error')
+        return redirect(url_for('user.login'))
+
+    user = User.query.filter_by(id=email[0]).first()
+
+    if user.email_confirmed:
+        flash('Account already confirmed. Please login.', 'info')
+    else:
+        user.email_confirmed = True
+        user.email_confirmed_on = tzware_datetime()
+        user.save()
+        flash('Thank you for confirming your email address!')
+
+    return redirect(url_for('user.welcome'))
 
 
 @user.route('/settings')

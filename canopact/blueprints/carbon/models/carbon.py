@@ -2,9 +2,6 @@
 
 Calculates carbon emissions from Expensify report and expense data.
 
-TODO:
-    * rename co2 column to co2e.
-
 """
 
 from canopact.extensions import db
@@ -26,175 +23,188 @@ class Carbon(ResourceMixin, db.Model):
     origin = db.Column(db.String(100))
     destination = db.Column(db.String(100))
     distance = db.Column(db.Float())
+    co2e = db.Column(db.Float())
     co2 = db.Column(db.Float())
+    ch4 = db.Column(db.Float())
+    n2o = db.Column(db.Float())
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(Carbon, self).__init__(**kwargs)
 
     @staticmethod
-    def convert_to_carbon_air(distance, short=None, long=None, domestic=None):
-        """Convert air distance to CO2 using the DEFRA emmisions factor.
-
-        Notes:
-            distance must be in the units km.
+    def convert(distance, mode, factors=None):
+        """Convert distance into greenhouse emissions.
 
         Args:
             distance (float): distance in in km.
-            short (float): emissions factor for short haul flights
+            factors (dict): emissions factors.
+
+        Notes:
+            * distance must be in the units km.
+            * if factors is None, the DEFRA emission factors will be used.
+
+        Returns:
+            emissions (dict): co2e, co2, ch4 and n2o emissions.
+
+        """
+        if factors is None:
+            factors = current_app.config['DEFRA_EMISSION_FACTORS']
+
+        emissions = {}
+
+        for e, f in factors.items():
+            try:
+                factor = f[mode]
+            except KeyError:
+                if mode == 'air':
+                    err = f'Use convert_to_emissions_air() for air modes.'
+                elif mode == 'bus':
+                    err = 'Use convert_to_emissions_bus() for bus modes.'
+                else:
+                    err = (f'Could not find {mode} in `factors`. Should be in:'
+                           f' [car, taxi, train]')
+                raise KeyError(err)
+
+            em = distance * factor
+            emissions[e] = em
+
+        return emissions
+
+    @staticmethod
+    def convert_air(distance, factors):
+        """Convert distance for flight travel into greenhouse emissions.
+
+        Args:
+            distance (float): distance in in km.
+            factors (dict): emissions factors.
+
+        Notes:
+            distance must be in the units km.
+            short: emissions factor for short haul flights
                 500km - 2500km.
-            long (float): emissions factor for long haul flights > 2500km.
-            domestic (float): emissions factors for domestic flights <= 500km.
+            long emissions: factor for long haul flights > 2500km.
+            domestic: emissions factors for domestic flights <= 500km.
 
         Returns:
-            co2 (float): carbon emissions in kg.
+            emissions (dict): co2e, co2, ch4 and n2o emissions.
 
         """
-        if short is None:
-            short = current_app.config['EF_AIR_SHORT']
-        if long is None:
-            long = current_app.config['EF_AIR_LONG']
-        if domestic is None:
-            domestic = current_app.config['EF_AIR_DOMESTIC']
+        if factors is None:
+            factors = current_app.config['DEFRA_EMISSION_FACTORS']
 
-        if distance > 0 and distance <= 500:
-            co2 = distance * domestic
-        elif distance > 500 and distance <= 2500:
-            co2 = distance * short
+        emissions = {}
+
+        for e, f in factors.items():
+            air = f['air']
+            long = air['long']
+            short = air['short']
+            domestic = air['domestic']
+
+            if distance > 0 and distance <= 500:
+                em = distance * domestic
+            elif distance > 500 and distance <= 2500:
+                em = distance * short
+            else:
+                em = distance * long
+
+            emissions[e] = em
+
+        return emissions
+
+    @staticmethod
+    def convert_bus(distance, factors):
+        """Convert distance for bus travel into greenhouse emissions.
+
+        Args:
+            distance (float): distance in in km.
+            factors (dict): emissions factors.
+
+        Notes:
+            distance must be in the units km.
+            local: emissions factor for short distance <= 25km.
+            coach: emissions factor for long distance > 25km.
+
+        Returns:
+            emissions (dict): co2e, co2, ch4 and n2o emissions.
+
+        """
+        if factors is None:
+            factors = current_app.config['DEFRA_EMISSION_FACTORS']
+
+        emissions = {}
+
+        for e, f in factors.items():
+            bus = f['bus']
+            local = bus['local']
+            coach = bus['coach']
+
+            if distance > 0 and distance <= 25:
+                em = distance * local
+            else:
+                em = distance * coach
+
+            emissions[e] = em
+
+        return emissions
+
+    @staticmethod
+    def get_travel_mode(category):
+        """Helper function to convert Expensify category into EF mode.
+
+        Args:
+            category (str): Expensify category.
+
+        Returns:
+            mode (str): travel mode for emission factors.
+
+        """
+        if category in ['Car, Van and Travel Expenses: Car Hire',
+                        'Car, Van and Travel Expenses: Fuel']:
+            mode = 'car'
+        elif category == 'Car, Van and Travel Expenses: Taxi':
+            mode = 'taxi'
+        elif category == 'Car, Van and Travel Expenses: Train':
+            mode = 'train'
         else:
-            co2 = distance * long
+            mode = None
 
-        return co2
+        return mode
 
-    @staticmethod
-    def convert_to_carbon_bus(distance, local=None, coach=None):
-        """Convert bus distance to CO2 using the DEFRA emmisions factor.
-
-        Notes:
-            distance must be in the units km.
-
-        Args:
-            distance (float): distance in in km.
-            local (float): emissions factor for short distance <= 25km.
-            coach (float): emissions factor for long distance > 25km.
-
-        Returns:
-            co2 (float): carbon emissions in kg.
-
-        """
-        if local is None:
-            local = current_app.config['EF_BUS_LOCAL']
-        if coach is None:
-            coach = current_app.config['EF_BUS_COACH']
-
-        if distance > 0 and distance <= 25:
-            co2 = distance * local
-        else:
-            co2 = distance * coach
-
-        return co2
-
-    @staticmethod
-    def convert_to_carbon_car(distance, factor=None):
-        """Convert car distance to CO2 using the DEFRA emmisions factor.
-
-        Notes:
-            distance must be in the units km.
-
-        Args:
-            distance (float): distance in in km.
-            factor (float): emissions factor.
-
-        Returns:
-            co2 (float): carbon emissions in kg.
-
-        """
-        if factor is None:
-            factor = current_app.config['EF_CAR']
-
-        co2 = distance * factor
-
-        return co2
-
-    @staticmethod
-    def convert_to_carbon_taxi(distance, factor=None):
-        """Convert taxi distance to CO2 using the DEFRA emmisions factor.
-
-        Notes:
-            distance must be in the units km.
-
-        Args:
-            distance (float): distance in in km.
-            factor (float): emissions factor.
-
-        Returns:
-            co2 (float): carbon emissions in kg.
-
-        """
-        if factor is None:
-            factor = current_app.config['EF_TAXI']
-
-        co2 = distance * factor
-
-        return co2
-
-    @staticmethod
-    def convert_to_carbon_train(distance, factor=None):
-        """Convert train distance to CO2 using the DEFRA emmisions factor.
-
-        Notes:
-            distance must be in the units km.
-
-        Args:
-            distance (float): distance in in km.
-            factor (float): emissions factor.
-
-        Returns:
-            co2 (float): carbon emissions in kg.
-
-        """
-        if factor is None:
-            factor = current_app.config['EF_TRAIN']
-
-        co2 = distance * factor
-
-        return co2
-
-    def convert_to_carbon(self, distance=None, category=None, **kwargs):
-        """Wrapper function to convert distance to carbon.
+    @classmethod
+    def emissions(cls, distance=None, category=None, factors=None, **kwargs):
+        """Factory method to convert distance to greenhouse emissions.
 
         Args:
             distance (float): distance in in km.
             category (str): expense category.
+            factors (dict): emissions factors.
 
-        Sets:
-            co2 (float): carbon in kg.
+        Returns
+            carbon.Carbon: instantiated Carbon class.
 
         """
+        if factors is None:
+            factors = current_app.config['DEFRA_EMISSION_FACTORS']
         if distance is None:
-            distance = self.distance
+            distance = kwargs.get('distance')
+            kwargs.pop('distance')
         if category is None:
-            category = self.expense_category
+            category = kwargs.get('expense_category')
 
-        # No distance available if the route is invalid.
-        if distance is None:
-            return None
+        mode = Carbon.get_travel_mode(category)
 
-        if category == 'Car, Van and Travel Expenses: Air':
-            co2 = Carbon.convert_to_carbon_air(distance, **kwargs)
-        elif category == 'Car, Van and Travel Expenses: Bus':
-            co2 = Carbon.convert_to_carbon_bus(distance, **kwargs)
-        elif category in ['Car, Van and Travel Expenses: Car Hire',
-                          'Car, Van and Travel Expenses: Fuel']:
-            co2 = Carbon.convert_to_carbon_car(distance, **kwargs)
-        elif category == 'Car, Van and Travel Expenses: Taxi':
-            co2 = Carbon.convert_to_carbon_taxi(distance, **kwargs)
-        elif category == 'Car, Van and Travel Expenses: Train':
-            co2 = Carbon.convert_to_carbon_train(distance, **kwargs)
+        if mode is None:
+            if category == 'Car, Van and Travel Expenses: Air':
+                ems = Carbon.convert_air(distance, factors)
+            elif category == 'Car, Van and Travel Expenses: Bus':
+                ems = Carbon.convert_bus(distance, factors)
+            else:
+                raise ValueError(f"{category} is an invalid category. Must be "
+                                 f"one of Car, Van and Travel Expenses:<'Taxi'"
+                                 f", 'Air', 'Bus', 'Car Hire', 'Fuel', 'Taxi'"
+                                 f", 'Train'>.")
         else:
-            raise ValueError(f"{category} is an invalid category. Must be "
-                             f"one of Car, Van and Travel Expenses: <Taxi:"
-                             f"'Air', 'Bus', 'Car Hire', 'Fuel', 'Taxi'"
-                             f", 'Train'>")
+            ems = Carbon.convert(distance, mode, factors)
 
-        self.co2 = co2
+        return cls(distance=distance, **kwargs, **ems)

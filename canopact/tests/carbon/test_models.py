@@ -157,8 +157,14 @@ class TestDistance():
 
 
 class TestCarbon():
-    def test_convert_to_carbon_air(self):
-        expected_co2 = 85.5415
-        actual_co2 = Carbon.convert_to_carbon_air(distance=550)
+    def test_convert(self):
+        expected_ems = {
+            'co2e': 94.27,
+            'co2': 93.5825,
+            'ch4': 0.08800000000000001,
+            'n2o': 0.5995
+        }
 
-        assert expected_co2 == actual_co2
+        actual_ems = Carbon.convert(distance=550, mode='car')
+
+        assert expected_ems == actual_ems

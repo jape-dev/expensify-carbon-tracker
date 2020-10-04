@@ -65,16 +65,101 @@ DISTANCE_UNIT = 'metric'
 # Distance 24 API.
 DISTANCE_24_URL = 'https://www.distance24.org/route.json?'
 
-# Emission Factors.
-EF_CAR = 0.1714
-EF_TAXI = 0.20369
-EF_TRAIN = 0.03694
-EF_AIR_SHORT = 0.15553
-EF_AIR_LONG = 0.19085
-EF_AIR_DOMESTIC = 0.2443
-EF_BUS_LOCAL = 0.10312
-EF_BUS_COACH = 0.02732
+# DEFRA Emission Factors.
+EF_CO2E_CAR = 0.1714
+EF_CO2E_TAXI = 0.20369
+EF_CO2E_TRAIN = 0.03694
+EF_CO2E_AIR_SHORT = 0.15553
+EF_CO2E_AIR_LONG = 0.19085
+EF_CO2E_AIR_DOMESTIC = 0.2443
+EF_CO2E_BUS_LOCAL = 0.10312
+EF_CO2E_BUS_COACH = 0.02732
 
+EF_CO2_CAR = 0.17015
+EF_CO2_TAXI = 0.20185
+EF_CO2_TRAIN = 0.03659
+EF_CO2_AIR_SHORT = 0.15475
+EF_CO2_AIR_LONG = 0.18989
+EF_CO2_AIR_DOMESTIC = 0.24298
+EF_CO2_BUS_LOCAL = 0.10231
+EF_CO2_BUS_COACH = 0.02679
+
+EF_CH4_CAR = 0.00016
+EF_CH4_TAXI = 0.00000349
+EF_CH4_TRAIN = 0.00006
+EF_CH4_AIR_SHORT = 0.00001
+EF_CH4_AIR_LONG = 0.00001
+EF_CH4_AIR_DOMESTIC = 0.00011
+EF_CH4_BUS_LOCAL = 0.00002
+EF_CH4_BUS_COACH = 0.00001
+
+EF_N2O_CAR = 0.00109
+EF_N2O_TAXI = 0.00184
+EF_N2O_TRAIN = 0.00006
+EF_N2O_AIR_SHORT = 0.00077
+EF_N2O_AIR_LONG = 0.00095
+EF_N2O_AIR_DOMESTIC = 0.00121
+EF_N2O_BUS_LOCAL = 0.00079
+EF_N2O_BUS_COACH = 0.00052
+
+DEFRA_EMISSION_FACTORS = {
+    'co2e': {
+        'air': {
+            'long': EF_CO2E_AIR_LONG,
+            'short': EF_CO2E_AIR_SHORT,
+            'domestic': EF_CO2E_AIR_DOMESTIC
+        },
+        'bus': {
+            'local': EF_CO2E_BUS_LOCAL,
+            'coach': EF_CO2E_BUS_COACH
+        },
+        'train': EF_CO2E_TRAIN,
+        'car': EF_CO2E_CAR,
+        'taxi': EF_CO2E_TAXI
+    },
+    'co2': {
+        'air': {
+            'long': EF_CO2_AIR_LONG,
+            'short': EF_CO2_AIR_SHORT,
+            'domestic': EF_CO2_AIR_DOMESTIC
+        },
+        'bus': {
+            'local': EF_CO2_BUS_LOCAL,
+            'coach': EF_CO2_BUS_COACH
+        },
+        'train': EF_CO2_TRAIN,
+        'car': EF_CO2_CAR,
+        'taxi': EF_CO2_TAXI
+    },
+    'ch4': {
+        'air': {
+            'long': EF_CH4_AIR_LONG,
+            'short': EF_CH4_AIR_SHORT,
+            'domestic': EF_CH4_AIR_DOMESTIC
+        },
+        'bus': {
+            'local': EF_CH4_BUS_LOCAL,
+            'coach': EF_CH4_BUS_COACH
+        },
+        'train': EF_CH4_TRAIN,
+        'car': EF_CH4_CAR,
+        'taxi': EF_CH4_TAXI
+    },
+    'n2o': {
+        'air': {
+            'long': EF_N2O_AIR_LONG,
+            'short': EF_N2O_AIR_SHORT,
+            'domestic': EF_N2O_AIR_DOMESTIC
+        },
+        'bus': {
+            'local': EF_N2O_BUS_LOCAL,
+            'coach': EF_N2O_BUS_COACH
+        },
+        'train': EF_N2O_TRAIN,
+        'car': EF_N2O_CAR,
+        'taxi': EF_N2O_TAXI
+    }
+}
 
 # Billing.
 STRIPE_SECRET_KEY = None

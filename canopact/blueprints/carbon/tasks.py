@@ -100,6 +100,7 @@ def calculate_carbon(self):
     # Reduce carbon cols down to cols of interest and convert to a dictionary.
     carbon_df = distances[['expense_id', 'origin', 'destination',
                            'expense_category', 'distance']]
+    carbon_df = carbon_df[carbon_df['distance'].notnull()]
     carbon_dict = carbon_df.to_dict('records')
 
     # Save route records to db.
@@ -109,8 +110,7 @@ def calculate_carbon(self):
 
     # Convert distances to carbon and save records to db.
     for d in carbon_dict:
-        c = Carbon(**d)
-        c.convert_to_carbon()
+        c = Carbon.emissions(**d)
         c.update_and_save(Carbon, expense_id=d['expense_id'])
 
     print('Calculate Carbon complete.')

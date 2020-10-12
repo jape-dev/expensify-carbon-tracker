@@ -11,6 +11,7 @@ from canopact.app import create_app
 from lib.util_datetime import timedelta_months
 from canopact.extensions import db as _db
 from canopact.blueprints.carbon.models.carbon import Carbon
+from canopact.blueprints.company.models import Company
 from canopact.blueprints.carbon.models.expense import Expense
 from canopact.blueprints.carbon.models.route import Route
 from canopact.blueprints.carbon.models.report import Report
@@ -80,14 +81,19 @@ def db(app):
     # Create a single user because a lot of tests do not mutate this user.
     # It will result in faster tests.
     params = {
+        'id': 1,
         'role': 'admin',
         'email': 'admin@local.host',
         'password': 'password',
-        'coins': 100
+        'coins': 100,
+        'company_id': 1
     }
 
     admin = User(**params)
+    company = Company(id=params['company_id'])
 
+    _db.session.add(company)
+    _db.session.commit()
     _db.session.add(admin)
     _db.session.commit()
 
@@ -133,25 +139,31 @@ def users(db):
     :param db: Pytest fixture
     :return: SQLAlchemy database session
     """
+    db.session.query(Company).delete()
     db.session.query(User).delete()
 
     users = [
         {
+            'id': 1,
             'role': 'admin',
             'email': 'admin@local.host',
-            'password': 'password'
+            'password': 'password',
+            'company_id': 2
         },
         {
+            'id': 2,
             'active': False,
             'email': 'disabled@local.host',
-            'password': 'password'
+            'password': 'password',
+            'company_id': 3
         }
     ]
 
     for user in users:
+        db.session.add(Company(id=user['company_id']))
+        db.session.commit()
         db.session.add(User(**user))
-
-    db.session.commit()
+        db.session.commit()
 
     return db
 
@@ -335,6 +347,7 @@ def report_instance():
 def user_instance():
     attr = {
         'id': 1,
+        'company_id': 1
     }
     return User(**attr)
 
@@ -537,18 +550,24 @@ def subscriptions(db):
     if subscriber:
         subscriber.delete()
     db.session.query(Subscription).delete()
+    db.session.query(Company).delete()
 
     params = {
         'role': 'admin',
         'email': 'subscriber@local.host',
         'name': 'Subby',
         'password': 'password',
-        'payment_id': 'cus_000'
+        'payment_id': 'cus_000',
+        'company_id': 4
+
     }
 
+    company = Company(id=params['company_id'])
     subscriber = User(**params)
 
     # The account needs to be commit before we can assign a subscription to it.
+    db.session.add(company)
+    db.session.commit()
     db.session.add(subscriber)
     db.session.commit()
 

@@ -31,15 +31,18 @@ class PasswordResetForm(Form):
 
 
 class SignupForm(ModelForm):
-    email = EmailField(validators=[
-        DataRequired(),
-        Email(),
-        Unique(
-            User.email,
-            get_session=lambda: db.session
-        )
-    ])
+    email = EmailField('Company Email',
+                       validators=[
+                        DataRequired(),
+                        Email(),
+                        Unique(
+                            User.email,
+                            get_session=lambda: db.session
+                        )
+                        ])
+    company = StringField('Company Name', [DataRequired()])
     password = PasswordField('Password', [DataRequired(), Length(8, 128)])
+    invited = False
 
 
 class ResendEmailForm(Form):

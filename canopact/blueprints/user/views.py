@@ -15,6 +15,7 @@ from flask_login import (
 from lib.util_datetime import tzware_datetime
 from lib.safe_next_url import safe_next_url
 from canopact.blueprints.user.decorators import anonymous_required
+from canopact.blueprints.company.models import Company
 from canopact.blueprints.user.models import User
 from canopact.blueprints.user.forms import (
     LoginForm,
@@ -121,9 +122,14 @@ def signup():
 
     if form.validate_on_submit():
         u = User()
+        c = Company()
+
+        form.populate_obj(c)
+        c.save()
 
         form.populate_obj(u)
         u.password = User.encrypt_password(request.form.get('password'))
+        u.company_id = c.id
         u.save()
 
         if login_user(u):

@@ -24,6 +24,7 @@ from canopact.extensions import db
 class User(UserMixin, ResourceMixin, db.Model):
     ROLE = OrderedDict([
         ('member', 'Member'),
+        ('company_admin', 'Company Admin'),
         ('admin', 'Admin')
     ])
 
@@ -41,7 +42,8 @@ class User(UserMixin, ResourceMixin, db.Model):
 
     # Authentication.
     role = db.Column(db.Enum(*ROLE, name='role_types', native_enum=False),
-                     index=True, nullable=False, server_default='member')
+                     index=True, nullable=False, server_default='company_admin'
+                     )
     active = db.Column('is_active', db.Boolean(), nullable=False,
                        server_default='1')
     username = db.Column(db.String(24), unique=True, index=True)
@@ -51,6 +53,12 @@ class User(UserMixin, ResourceMixin, db.Model):
     email_confirmation_sent_on = db.Column(AwareDateTime(), nullable=True)
     email_confirmed = db.Column(db.Boolean(), nullable=True, default=False)
     email_confirmed_on = db.Column(AwareDateTime(), nullable=True)
+
+    # Company.
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id',
+                                                     onupdate='CASCADE',
+                                                     ondelete='CASCADE'),
+                           index=True, nullable=False)
 
     # Billing.
     name = db.Column(db.String(128), index=True)
@@ -72,8 +80,7 @@ class User(UserMixin, ResourceMixin, db.Model):
     # Additional settings.
     locale = db.Column(db.String(5), nullable=False, server_default='en')
 
-    # Vendor Credentials
-    # Expensify
+    # Vendor Credentials: Expensify.
     partnerUserID = db.Column(db.String(128))
     partnerUserSecret = db.Column(db.String(128))
 
@@ -270,7 +277,7 @@ class User(UserMixin, ResourceMixin, db.Model):
         Return the user's auth token. Use their password as part of the token
         because if the user changes their password we will want to invalidate
         all of their logins across devices. It is completely fine to use
-        md5 here as nothing leaks.
+        md5 here as nothing leaks. Company id is also included.
 
         This satisfies Flask-Login by providing a means to create a token.
 
@@ -279,7 +286,9 @@ class User(UserMixin, ResourceMixin, db.Model):
         private_key = current_app.config['SECRET_KEY']
 
         serializer = URLSafeTimedSerializer(private_key)
-        data = [str(self.id), md5(self.password.encode('utf-8')).hexdigest()]
+        data = [str(self.id),
+                str(self.company_id),
+                md5(self.password.encode('utf-8')).hexdigest()]
 
         return serializer.dumps(data)
 

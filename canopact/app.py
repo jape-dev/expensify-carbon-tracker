@@ -18,6 +18,7 @@ from canopact.blueprints.billing import billing
 from canopact.blueprints.billing import stripe_webhook
 from canopact.blueprints.bet import bet
 from canopact.blueprints.carbon import carbon
+from canopact.blueprints.company import company
 from canopact.blueprints.user.models import User
 from canopact.blueprints.billing.template_processors import (
   format_currency,
@@ -37,7 +38,8 @@ CELERY_TASK_LIST = [
     'canopact.blueprints.contact.tasks',
     'canopact.blueprints.user.tasks',
     'canopact.blueprints.billing.tasks',
-    'canopact.blueprints.carbon.tasks'
+    'canopact.blueprints.carbon.tasks',
+    'canopact.blueprints.company.tasks'
 ]
 
 
@@ -96,6 +98,7 @@ def create_app(settings_override=None):
     app.register_blueprint(stripe_webhook)
     app.register_blueprint(bet)
     app.register_blueprint(carbon)
+    app.register_blueprint(company)
     template_processors(app)
     extensions(app)
     authentication(app, User)

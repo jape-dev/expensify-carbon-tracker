@@ -33,6 +33,7 @@ def init(with_testdb):
 
     """
     from canopact.blueprints.carbon.models.route import Route
+    from canopact.blueprints.company.models import Company
     db.drop_all()
     db.create_all()
     print(db.engine.table_names())

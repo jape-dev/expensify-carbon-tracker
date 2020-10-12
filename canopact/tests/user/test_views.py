@@ -160,7 +160,8 @@ class TestSignup(ViewTestMixin):
         """ Signup successfully. """
         old_user_count = User.query.count()
 
-        user = {'email': 'new@local.host', 'password': 'password'}
+        user = {'email': 'new@local.host', 'company': 'company',
+                'password': 'password'}
         response = self.client.post(url_for('user.signup'), data=user,
                                     follow_redirects=True)
 
@@ -169,7 +170,7 @@ class TestSignup(ViewTestMixin):
         assert_status_with_message(200, response,
                                    'Thanks for registering!  '
                                    'Please check your email to  '
-                                   'confirm your email address')
+                                   'confirm your email address.')
 
         new_user_count = User.query.count()
         assert (old_user_count + 1) == new_user_count

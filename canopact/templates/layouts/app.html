@@ -12,7 +12,10 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a href="{{ url_for('page.home') }}"> Canopact
+        <a class="navbar-brand" href="{{ url_for('page.home') }}">
+          <img src="{{ url_for('static', filename='images/canopact.svg') }}"
+          class="img-responsive"
+          width="120" height="118" title="Canopact" alt="canopact"/>
         </a>
       </div>
       <div id="navbar" class="collapse navbar-collapse">

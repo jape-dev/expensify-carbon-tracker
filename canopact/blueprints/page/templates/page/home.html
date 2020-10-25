@@ -3,22 +3,16 @@
 {% block title %}Canopact{% endblock %}
 
 {% block body %}
-  <div class="container sm-margin-top">
-    <div class="row text-center lg-margin-bottom">
-      <h1>Canopact</h1>
-      <h3 class="text-muted">
-        Track your expensify Carbon emissions in real time.
-      </h3>
-    </div>
-    <div class="row text-center">
-      <div class="col-lg-4">
-        <i class="fa fa-fw fa-4x fa-trophy text-primary"></i>
-        <h2>Get Started</h2>
-        <p class="text-muted">Sign up now for free.</p>
-        <p>
-          <a href="{{ url_for('user.signup') }}" class="btn btn-default">Sign up</a>
-        </p>
-      </div>
-    </div>
+  <div class="text-center lg-margin-bottom">
+    <h1>Canopact</h1>
+    <h3 class="text-muted">
+      Grassroots Corporate Sustainability.
+    </h3>
+  </div>
+  <div class="text-center lg-margin-bottom">
+    <h2>Get Started</h2>
+    <p>
+      <a href="{{ url_for('user.signup') }}" class="btn btn-default">Sign up</a>
+    </p>
   </div>
 {% endblock %}

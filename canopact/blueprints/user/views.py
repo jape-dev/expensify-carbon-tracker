@@ -29,6 +29,7 @@ from canopact.blueprints.user.forms import (
     ResendEmailForm)
 import itsdangerous
 from itsdangerous import URLSafeTimedSerializer
+from vendors.salesforce import get_redirect_url, get_tokens
 
 
 user = Blueprint('user', __name__, template_folder='templates')
@@ -217,6 +218,31 @@ def update_credentials():
         return redirect(url_for('user.settings'))
 
     return render_template('user/update_credentials.html', form=form)
+
+
+@user.route('/settings/salesforce_login', methods=['GET'])
+@login_required
+def salesforce_login():
+    oauth_redirect = get_redirect_url()
+    return redirect(oauth_redirect)
+
+
+@user.route('/oauth2/callback', methods=['GET'])
+@login_required
+def salesforce_authorize():
+    # Get the authorisation code from the url.
+    code = request.args.get('code')
+    # Retrive the tokens using the code.
+    access, refresh = get_tokens(code)
+    # Save tokens to the user model.
+    current_user.sf_access_token = access
+    current_user.sf_refresh_token = refresh
+    current_user.sf_token_activated_on = tzware_datetime()
+    current_user.save()
+
+    flash('Salesforce account successfully authenticated.', 'success')
+
+    return redirect(url_for('user.settings'))
 
 
 @user.route('/settings/expensify_login', methods=['GET', 'POST'])

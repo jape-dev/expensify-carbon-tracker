@@ -80,7 +80,12 @@ class User(UserMixin, ResourceMixin, db.Model):
     # Additional settings.
     locale = db.Column(db.String(5), nullable=False, server_default='en')
 
-    # Vendor Credentials: Expensify.
+    # Salesforce.
+    sf_access_token = db.Column(db.String(128))
+    sf_refresh_token = db.Column(db.String(128))
+    sf_token_activated_on = db.Column(db.String(128))
+
+    # Expensify.
     partnerUserID = db.Column(db.String(128))
     partnerUserSecret = db.Column(db.String(128))
 

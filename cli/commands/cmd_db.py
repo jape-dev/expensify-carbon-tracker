@@ -5,6 +5,7 @@ from sqlalchemy_utils import database_exists, create_database
 from canopact.app import create_app
 from canopact.extensions import db
 from canopact.blueprints.user.models import User
+from canopact.blueprints.company.models import Company
 
 
 # Create an app context for the database connection.
@@ -57,15 +58,22 @@ def seed():
     if User.find_by_identity(app.config['SEED_ADMIN_EMAIL']) is not None:
         return None
 
-    params = {
+    company_params = {
+        'id': app.config['SEED_COMPANY_ID']
+    }
+
+    Company(**company_params).save()
+
+    user_params = {
         'role': 'admin',
         'email': app.config['SEED_ADMIN_EMAIL'],
         'password': app.config['SEED_ADMIN_PASSWORD'],
+        'company_id': app.config['SEED_COMPANY_ID'],
         'partnerUserID': app.config['SEED_EXPENSIFY_ID'],
         'partnerUserSecret': app.config['SEED_EXPENSIFY_TOKEN']
     }
 
-    return User(**params).save()
+    return User(**user_params).save()
 
 
 @click.command()

@@ -48,6 +48,11 @@ db_uri = 'postgresql://canopact:devpassword@postgres:5432/canopact'
 SQLALCHEMY_DATABASE_URI = db_uri
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+# Salesforce.
+SF_CLIENT_ID = None
+SF_CLIENT_SECRET = None
+SF_REDIRECT_URI = 'https://local.docker:8000/oauth2/callback'
+
 # Expensify.
 SEED_EXPENSIFY_ID = 'fake_id',
 SEED_EXPENSIFY_TOKEN = 'fake_token'
@@ -55,6 +60,7 @@ SEED_EXPENSIFY_TOKEN = 'fake_token'
 # User.
 SEED_ADMIN_EMAIL = 'dev@local.host'
 SEED_ADMIN_PASSWORD = 'devpassword'
+SEED_COMPANY_ID = '999999999'
 REMEMBER_COOKIE_DURATION = timedelta(days=90)
 
 # Google Distance Matrix API.

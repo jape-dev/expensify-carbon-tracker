@@ -233,8 +233,9 @@ def salesforce_authorize():
     # Get the authorisation code from the url.
     code = request.args.get('code')
     # Retrive the tokens using the code.
-    access, refresh = get_tokens(code)
+    instance, access, refresh = get_tokens(code)
     # Save tokens to the user model.
+    current_user.sf_instance_url = instance
     current_user.sf_access_token = access
     current_user.sf_refresh_token = refresh
     current_user.sf_token_activated_on = tzware_datetime()

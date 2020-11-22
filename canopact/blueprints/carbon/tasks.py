@@ -1,7 +1,10 @@
-"""Celery Beat Task for updating Report, Expense, Route and Carbon.
+"""Celery Beat Task for updating Report, Expense, Activity, Route and Carbon.
 
 Fetches data from the Expensify Integration Server via Expensify's Public API:
 https://integrations.expensify.com/Integration-Server/doc/
+
+Fetches data from the Salesforce Web Server API via simple_salesforce libary
+using Oauth2 authentication.
 
 Notes:
     Example Celery Beat config:
@@ -13,6 +16,7 @@ Notes:
         }
 """
 from canopact.app import create_celery_app
+from canopact.blueprints.carbon.models.activity import Activity
 from canopact.blueprints.carbon.models.expense import Carbon
 from canopact.blueprints.carbon.models.expense import Expense
 from canopact.blueprints.carbon.models.report import Report
@@ -63,6 +67,33 @@ def fetch_reports(self):
                 e.update_and_save(Expense, expense_id=e.expense_id)
 
     print('Fetch reports complete.')
+
+
+@celery.task(bind=True)
+def fetch_activities(self):
+    """Gets activities from the Salesforce API
+
+    """
+
+    def setattrs(_self, **kwargs):
+        """Helper function to set multiple attributes to Activity class"""
+        for k, v in kwargs.items():
+            setattr(_self, k, v)
+
+    # Get a list of the currently active user ids.
+    user_ids = [u[0] for u in db.session.query(User.id).distinct()]
+
+    # Iterate through user ids and retrieve event object records.
+    for id in user_ids:
+        a = Activity(user_id=id)
+        events = a.get_events()
+        records = events['records']
+        for event in records:
+            event = Activity.rename_event_keys(event)
+            setattrs(a, **event)
+            a.update_and_save(Activity, id=a.id)
+
+    print('fetch_activities complete')
 
 
 @celery.task(bind=True)

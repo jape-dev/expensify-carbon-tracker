@@ -12,13 +12,16 @@ from flask_login import UserMixin
 from itsdangerous import URLSafeTimedSerializer, \
     TimedJSONWebSignatureSerializer
 
-from lib.util_sqlalchemy import ResourceMixin, AwareDateTime
+from lib.util_sqlalchemy import ResourceMixin, AwareDateTime, tzware_datetime
 from canopact.blueprints.billing.models.credit_card import CreditCard
 from canopact.blueprints.billing.models.subscription import Subscription
 from canopact.blueprints.billing.models.invoice import Invoice
 from canopact.blueprints.bet.models.bet import Bet
+from canopact.blueprints.carbon.models.activity import Activity
 from canopact.blueprints.carbon.models.report import Report
 from canopact.extensions import db
+from vendors import salesforce
+from vendors.salesforce import SalesforceOAuth2
 
 
 class User(UserMixin, ResourceMixin, db.Model):
@@ -39,6 +42,8 @@ class User(UserMixin, ResourceMixin, db.Model):
     invoices = db.relationship(Invoice, backref='users', passive_deletes=True)
     bets = db.relationship(Bet, backref='bets', passive_deletes=True)
     reports = db.relationship(Report, backref='reports', passive_deletes=True)
+    activities = db.relationship(Activity, backref='reports',
+                                 passive_deletes=True)
 
     # Authentication.
     role = db.Column(db.Enum(*ROLE, name='role_types', native_enum=False),
@@ -81,6 +86,7 @@ class User(UserMixin, ResourceMixin, db.Model):
     locale = db.Column(db.String(5), nullable=False, server_default='en')
 
     # Salesforce.
+    sf_instance_url = db.Column(db.String(128))
     sf_access_token = db.Column(db.String(128))
     sf_refresh_token = db.Column(db.String(128))
     sf_token_activated_on = db.Column(db.String(128))
@@ -356,3 +362,25 @@ class User(UserMixin, ResourceMixin, db.Model):
         self.coins += plan['metadata']['coins']
 
         return self.save()
+
+    def update_salesforce_token(self):
+        """
+        Updates the sf access token for a new session. Saves to self.
+
+        Returns:
+            access_token (str): access token for the current sf session.
+
+        """
+        # Retrieve a new access token using the refresh token.
+        id, secret, uri = salesforce.get_config()
+        oauth = SalesforceOAuth2(id, secret, uri)
+        tokens = oauth.get_access_token_refresh(self.sf_refresh_token)
+        instance_url = tokens.json().get("instance_url")
+        access_token = tokens.json().get("access_token")
+
+        # Update the access token in db.
+        self.sf_access_token = access_token
+        self.sf_token_activated_on = tzware_datetime()
+        self.save()
+
+        return instance_url, access_token

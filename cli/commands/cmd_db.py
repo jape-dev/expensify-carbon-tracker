@@ -33,6 +33,7 @@ def init(with_testdb):
         * Figure out why route model is not being created w/o import.
 
     """
+    from canopact.blueprints.carbon.models.activity import Activity
     from canopact.blueprints.carbon.models.route import Route
     from canopact.blueprints.company.models import Company
     db.drop_all()

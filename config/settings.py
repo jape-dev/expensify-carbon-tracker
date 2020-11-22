@@ -40,6 +40,10 @@ CELERYBEAT_SCHEDULE = {
     'calculate-carbon': {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
         'schedule': 10
+    },
+    'fetch-activities': {
+        'task': 'canopact.blueprints.carbon.tasks.fetch_activities',
+        'schedule': 10
     }
 }
 

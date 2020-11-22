@@ -38,3 +38,6 @@ Flask-Mail==0.9.1
 Flask-Login==0.3.2
 Flask-Limiter==0.9.3
 Flask-Babel==0.9
+
+# Vendors.
+simple-salesforce==1.10.1

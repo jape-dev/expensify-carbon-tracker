@@ -100,7 +100,7 @@ class SalesforceOAuth2():
 
 
 def get_config():
-    """Gwetter function for SF config to prevent circular imports"""
+    """Getter function for SF config to prevent circular imports"""
     from canopact.app import create_app
     app = create_app()
 
@@ -151,20 +151,22 @@ def get_tokens(code):
     )
     # Retrieve access_token from Salesforce by sending authenticated code
     sf_authentication = oauth.get_access_token(code)
+    instance_url = sf_authentication.json().get("instance_url")
     access_token = sf_authentication.json().get("access_token")
     refresh_token = sf_authentication.json().get("refresh_token")
 
-    return access_token, refresh_token
+    return instance_url, access_token, refresh_token
 
 
-def main():
+def main(client_id=None, client_secret=None, redirect_uri=None):
     """E2E Outh2 flow to authenticate salesforce account.
 
     Returns:
         json: relevant tokens and meta data from authentication.
 
     """
-    client_id, client_secret, redirect_uri = get_config()
+    if not all([client_id, client_secret, redirect_uri]):
+        client_id, client_secret, redirect_uri = get_config()
 
     oauth = SalesforceOAuth2(
         client_id=client_id,

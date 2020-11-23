@@ -12,10 +12,13 @@ from lib.util_sqlalchemy import ResourceMixin
 
 
 class Company(ResourceMixin, db.Model):
-
     __tablename__ = 'companies'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
+    employees = db.Column(db.String(20))
+    industry = db.Column(db.String(50))
+    country = db.Column(db.String(128))
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.

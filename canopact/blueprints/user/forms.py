@@ -3,11 +3,12 @@ from wtforms import HiddenField, StringField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Length, Optional, Regexp
 from wtforms_components import EmailField, Email, Unique
 
-from config.settings import LANGUAGES
+from config.settings import LANGUAGES, INDUSTRIES, EMPLOYEES
 from lib.util_wtforms import ModelForm, choices_from_dict
 from canopact.blueprints.user.models import User, db
 from canopact.blueprints.user.validations import ensure_identity_exists, \
     ensure_existing_password_matches
+import pycountry
 
 
 class LoginForm(Form):
@@ -40,7 +41,21 @@ class SignupForm(ModelForm):
                             get_session=lambda: db.session
                         )
                         ])
-    company = StringField('Company Name', [DataRequired()])
+    name = StringField('Company Name', [DataRequired()])
+    employees = SelectField('Employees',
+                            choices=choices_from_dict(EMPLOYEES,
+                                                      prepend_blank=False))
+    industry = SelectField('Industry',
+                           choices=choices_from_dict(INDUSTRIES,
+                                                     prepend_blank=False),
+                           default='Please Select')
+    country = SelectField('Country of Company',
+                          choices=[(
+                              country.alpha_2,
+                              country.name) for country in pycountry.countries
+                              ],
+                          default='GB')
+    job_title = StringField('Job Title')
     password = PasswordField('Password', [DataRequired(), Length(8, 128)])
     invited = False
 

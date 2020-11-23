@@ -44,3 +44,25 @@ def role_required(*roles):
         return decorated_function
 
     return decorator
+
+
+def email_confirm_required(url='/'):
+    """
+    Restrict users from accessing page if they have not confirmed their email.
+
+    Return:
+        function
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.email_confirmed:
+                flash('You must confirm your email address before viewing this'
+                      ' page.', 'error')
+                return redirect(url)
+
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator

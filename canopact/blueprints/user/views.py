@@ -14,7 +14,8 @@ from flask_login import (
 
 from lib.util_datetime import tzware_datetime
 from lib.safe_next_url import safe_next_url
-from canopact.blueprints.user.decorators import anonymous_required
+from canopact.blueprints.user.decorators import (
+    anonymous_required, email_confirm_required)
 from canopact.blueprints.company.models import Company
 from canopact.blueprints.user.models import User
 from canopact.blueprints.user.forms import (
@@ -196,6 +197,7 @@ def confirm_email(token):
 
 @user.route('/settings')
 @login_required
+@email_confirm_required()
 def settings():
     return render_template('user/settings.html')
 

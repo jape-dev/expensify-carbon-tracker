@@ -25,6 +25,7 @@ pandas==1.0.5
 # Forms.
 Flask-WTF==0.9.5
 WTForms-Components==0.9.7
+pycountry==20.7.3
 
 # Payments.
 stripe==1.32.0

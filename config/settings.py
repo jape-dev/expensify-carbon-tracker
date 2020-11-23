@@ -16,6 +16,38 @@ MAIL_USE_SSL = False
 MAIL_USERNAME = 'james@canopact.com'
 MAIL_PASSWORD = 'test'
 
+# Company Sign Up.
+EMPLOYEES = {
+    '1-10': '1-10 employees',
+    '11-20': '11-20 employees',
+    '21-99': '21-99 employees',
+    '100-199': '100-199 employees',
+    '200-749': '200-749 employees',
+    '750-1999': '750-1999 employees',
+    '2000+': '2000+ employees',
+}
+
+INDUSTRIES = {
+    'Please Select': 'Please Select',
+    'Agriculture': 'Agriculture',
+    'Charity & Non-Governmental-Organisations': 'Charity & Non-Governmental-Organisations',
+    'Media & Communications': 'Media & Communications',
+    'Construction': 'Construction',
+    'Consulting & Professional Services': 'Consulting & Professional Services',
+    'Defense': 'Defense',
+    'E-commerce & Technology': 'E-commerce & Technology',
+    'Education': 'Education',
+    'Electronics': 'Electronics',
+    'Energy & Natural Resources': 'Energy & Natural Resources',
+    'Finance, Insurance & Real Estate': 'Finance, Insurance & Real Estate',
+    'Health': 'Health',
+    'Industrial & Manufacturing': 'Industrial & Manufacturing',
+    'Law and Lobbying': 'Law and Lobbying',
+    'Leisure & Hospitality': 'Leisure & Hospitality',
+    'Transportation': 'Transportation',
+    'Other': 'Other'
+}
+
 # Flask-Babel.
 LANGUAGES = {
     'en': 'English',

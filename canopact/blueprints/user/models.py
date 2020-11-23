@@ -64,6 +64,7 @@ class User(UserMixin, ResourceMixin, db.Model):
                                                      onupdate='CASCADE',
                                                      ondelete='CASCADE'),
                            index=True, nullable=False)
+    job_title = db.Column(db.String(128))
 
     # Billing.
     name = db.Column(db.String(128), index=True)

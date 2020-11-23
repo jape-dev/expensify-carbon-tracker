@@ -189,7 +189,7 @@ def confirm_email(token):
         user.email_confirmed = True
         user.email_confirmed_on = tzware_datetime()
         user.save()
-        flash('Thank you for confirming your email address!')
+        flash('Thank you for confirming your email address!', 'success')
 
     return redirect(url_for('user.welcome'))
 

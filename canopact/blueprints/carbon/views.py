@@ -8,6 +8,7 @@ from canopact.blueprints.carbon.forms import (
     RouteForm,
     JourneysForm
 )
+from canopact.blueprints.user.decorators import email_confirm_required
 from canopact.extensions import db
 from flask import (
     Blueprint,
@@ -21,6 +22,7 @@ from flask import (
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
 # Dashboard -------------------------------------------------------------------
+@email_confirm_required()
 @carbon.route('/carbon', methods=['GET', 'POST'])
 def dashboard():
     """Renders template for the carbon dashboard"""
@@ -47,6 +49,7 @@ def get_routes():
     return routes
 
 
+@email_confirm_required()
 @carbon.route('/carbon/cleaner')
 def cleaner():
     """Retrieves all expenses with an invalid and renders cleaner template."""

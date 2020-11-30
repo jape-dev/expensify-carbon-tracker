@@ -15,12 +15,15 @@ from canopact.blueprints.company.models import Company
 from canopact.blueprints.user.models import User
 from canopact.blueprints.company.forms import InviteForm
 from canopact.blueprints.user.forms import SignupForm
-from canopact.blueprints.user.decorators import anonymous_required
+from canopact.blueprints.user.decorators import (anonymous_required,
+                                                 role_required)
+from canopact.blueprints.billing.decorators import subscription_required
 import itsdangerous
 from itsdangerous import URLSafeTimedSerializer
 from lib.util_datetime import tzware_datetime
 
-company = Blueprint('company', __name__, template_folder='templates')
+company = Blueprint('company', __name__, template_folder='templates',
+                    url_prefix='/company')
 
 
 @company.route('/invite', methods=['GET', 'POST'])
@@ -90,3 +93,22 @@ def invite_signup(token, email):
 
     return render_template('user/signup.html', form=form, token=token,
                            email=email)
+
+
+@company.route('/company/portal', methods=['GET'])
+@login_required
+@role_required('company_admin')
+@subscription_required
+def portal():
+    """
+    Route for company_admin's to access their company portal.
+
+    Returns:
+        Flask.render_template: company portal page.
+
+    """
+    c = Company.query.get(current_user.company_id)
+    days_left_on_trial = c.days_left_on_trial()
+
+    return render_template('company/portal.html',
+                           days_left_on_trial=days_left_on_trial)

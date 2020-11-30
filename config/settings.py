@@ -1,4 +1,5 @@
 from datetime import timedelta
+from celery.schedules import crontab
 
 
 DEBUG = True
@@ -76,6 +77,10 @@ CELERYBEAT_SCHEDULE = {
     'fetch-activities': {
         'task': 'canopact.blueprints.carbon.tasks.fetch_activities',
         'schedule': 10
+    },
+    'expire-free-trials': {
+        'task': 'canopact.blueprints.company.tasks.expire_free_trials',
+        'schedule': crontab(hour=0, minute=1)
     }
 }
 
@@ -207,46 +212,19 @@ DEFRA_EMISSION_FACTORS = {
 STRIPE_SECRET_KEY = None
 STRIPE_PUBLISHABLE_KEY = None
 STRIPE_API_VERSION = '2016-03-07'
-STRIPE_CURRENCY = 'usd'
+STRIPE_CURRENCY = 'gbp'
 STRIPE_PLANS = {
     '0': {
-        'id': 'bronze',
-        'name': 'Bronze',
-        'amount': 100,
-        'currency': STRIPE_CURRENCY,
-        'interval': 'month',
-        'interval_count': 1,
-        'trial_period_days': 14,
-        'statement_descriptor': 'canopact BRONZE',
-        'metadata': {
-            'coins': 110
-        }
-    },
-    '1': {
         'id': 'gold',
         'name': 'Gold',
-        'amount': 500,
+        'amount': 12000,
         'currency': STRIPE_CURRENCY,
         'interval': 'month',
         'interval_count': 1,
-        'trial_period_days': 14,
         'statement_descriptor': 'canopact GOLD',
         'metadata': {
             'coins': 600,
             'recommended': True
-        }
-    },
-    '2': {
-        'id': 'platinum',
-        'name': 'Platinum',
-        'amount': 1000,
-        'currency': STRIPE_CURRENCY,
-        'interval': 'month',
-        'interval_count': 1,
-        'trial_period_days': 14,
-        'statement_descriptor': 'canopact PLATINUM',
-        'metadata': {
-            'coins': 1500
         }
     }
 }

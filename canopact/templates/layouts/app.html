@@ -52,6 +52,10 @@
             <li>
               {% include 'admin/_menu.html' %}
             </li>
+          {% elif current_user.role == 'company_admin' %}
+            <li>
+              {% include 'company/_menu.html' %}
+            </li>
           {% endif %}
           {% if current_user.is_authenticated %}
             <li class="dropdown">

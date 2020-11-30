@@ -1,5 +1,6 @@
 from lib.flask_mailplus import send_template_message
 from canopact.app import create_celery_app
+from canopact.blueprints.company.models import Company
 
 celery = create_celery_app()
 
@@ -26,3 +27,15 @@ def deliver_invite_email(to_email, from_email, invite_url):
                           ctx=ctx)
 
     return None
+
+
+@celery.task()
+def expire_free_trials():
+    """
+    Inactivate free trials once they have reached their expiry date.
+
+    Returns:
+        Result of updating the records.
+
+    """
+    return Company.expire_free_trials()

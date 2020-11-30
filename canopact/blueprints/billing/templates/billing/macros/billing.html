@@ -50,7 +50,7 @@
         {% endif %}
 
         <p class="small text-muted sm-margin-top text-center">
-          ${{ plan.amount | format_currency }} / {{ plan.interval }}
+          £{{ plan.amount | format_currency }} / {{ plan.interval }}
         </p>
       </div>
     </div>
@@ -60,7 +60,7 @@
 
 {% macro coupon_data(coupon) -%}
   {% if coupon.amount_off %}
-    {% set discount = '$' + coupon.amount_off | format_currency %}
+    {% set discount = '£' + coupon.amount_off | format_currency %}
   {% else %}
     {% set discount = coupon.percent_off | string + '%' %}
   {% endif %}
@@ -111,7 +111,7 @@
 
 {% macro coupon_discount(amount_off, percent_off) -%}
   {% if amount_off %}
-    ${{ amount_off | format_currency }}
+    £{{ amount_off | format_currency }}
   {% else %}
     {{ percent_off }}%
   {% endif %}
@@ -158,7 +158,7 @@
             </time>
           </td>
           <td>
-            ${{ invoice.amount_due | format_currency }}
+            £{{ invoice.amount_due | format_currency }}
             <span class="color--muted"> / {{ invoice.interval }}</span>
           </td>
         </tr>
@@ -207,10 +207,10 @@
             </time>
           </td>
           <td title="{{ (invoice.tax_percent | round(2)) | string + '%' if invoice.tax_percent }}">
-            {{ '$' + invoice.tax | format_currency if invoice.tax }}
+            {{ '£' + invoice.tax | format_currency if invoice.tax }}
           </td>
           <td title="{{ invoice.currency }}">
-            ${{ invoice.total | format_currency }}
+            £{{ invoice.total | format_currency }}
           </td>
         </tr>
       {% endfor %}

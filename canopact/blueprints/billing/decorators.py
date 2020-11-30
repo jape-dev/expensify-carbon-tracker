@@ -13,7 +13,9 @@ def subscription_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.subscription:
+        from canopact.blueprints.company.models import Company
+        company = Company.query.get(current_user.company_id)
+        if not company.trial_active:
             return redirect(url_for('billing.pricing'))
 
         return f(*args, **kwargs)

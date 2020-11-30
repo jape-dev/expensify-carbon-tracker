@@ -169,6 +169,52 @@ def users(db):
 
 
 @pytest.fixture(scope='function')
+def companies(db):
+    """
+    Create companies fixtures. They reset per test.
+
+    Args
+        db (pytest.fixture): Pytest fixture.
+
+    Returns:
+        SQLAlchemy database session.
+
+    """
+    db.session.query(Company).delete()
+
+    may_29_2015 = datetime.datetime(2015, 5, 29, 0, 0, 0)
+    may_29_2015 = pytz.utc.localize(may_29_2015)
+
+    june_30_2015 = datetime.datetime(2015, 6, 30)
+    june_30_2015 = pytz.utc.localize(june_30_2015)
+
+    companies = [
+        {
+            'id': 1,
+            'free_trial_expires_on': may_29_2015,
+            'trial_active': True
+        },
+        {
+            'id': 2,
+            'free_trial_expires_on': june_30_2015,
+            'trial_active': True
+        },
+        {
+            'id': 3,
+            'free_trial_expires_on': may_29_2015,
+            'trial_active': True
+        }
+    ]
+
+    for company in companies:
+        db.session.add(Company(**company))
+
+    db.session.commit()
+
+    return db
+
+
+@pytest.fixture(scope='function')
 def reports(db):
     """
     Create expenses fixtures. They reset per test.

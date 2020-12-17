@@ -55,6 +55,9 @@ def coupon_code():
 @handle_stripe_exceptions
 @login_required
 def create():
+    # Prevent circular import.
+    from canopact.blueprints.company.models import Company
+
     if current_user.subscription:
         flash(_('You already have an active subscription.'), 'info')
         return redirect(url_for('user.settings'))
@@ -72,13 +75,17 @@ def create():
 
     if form.validate_on_submit():
         subscription = Subscription()
+        company = Company.query.get(current_user.company_id)
+        quantity = company.group_and_count_users()
         created = subscription.create(user=current_user,
+                                      company=company,
                                       name=request.form.get('name'),
                                       plan=request.form.get('plan'),
                                       coupon=request.form.get('coupon_code'),
                                       token=request.form.get('stripe_token'))
 
         if created:
+            subscription.add(company, qty=quantity)
             flash(_('Awesome, thanks for subscribing!'), 'success')
         else:
             flash(_('You must enable JavaScript for this request.'), 'warning')
@@ -128,6 +135,9 @@ def update():
 @handle_stripe_exceptions
 @login_required
 def cancel():
+    # Prevent circular import.
+    from canopact.blueprints.company.models import Company
+
     if not current_user.subscription:
         flash(_('You do not have an active subscription.'), 'error')
         return redirect(url_for('user.settings'))
@@ -136,7 +146,8 @@ def cancel():
 
     if form.validate_on_submit():
         subscription = Subscription()
-        cancelled = subscription.cancel(user=current_user)
+        company = Company.query.get(current_user.company_id)
+        cancelled = subscription.cancel(user=current_user, company=company)
 
         if cancelled:
             flash(_('Sorry to see you go, your subscription has been '
@@ -150,6 +161,9 @@ def cancel():
 @handle_stripe_exceptions
 @login_required
 def update_payment_method():
+    # Prevent circular import.
+    from canopact.blueprints.company.models import Company
+
     if not current_user.credit_card:
         flash(_('You do not have a payment method on file.'), 'error')
         return redirect(url_for('user.settings'))
@@ -165,7 +179,9 @@ def update_payment_method():
 
     if form.validate_on_submit():
         subscription = Subscription()
+        company = Company.query.get(current_user.company_id)
         updated = subscription.update_payment_method(user=current_user,
+                                                     company=company,
                                                      credit_card=card,
                                                      name=request.form.get(
                                                          'name'),

@@ -26,6 +26,13 @@ class Company(ResourceMixin, db.Model):
     free_trial_expires_on = db.Column(AwareDateTime())
     trial_active = db.Column(db.Boolean(), default=True)
 
+    # Billing.
+    billing_name = db.Column(db.String(128), index=True)
+    payment_id = db.Column(db.String(128), index=True)
+    cancelled_subscription_on = db.Column(AwareDateTime())
+    previous_plan = db.Column(db.String(128))
+    subscriptions = db.Column(db.Integer)
+
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(Company, self).__init__(**kwargs)
@@ -107,3 +114,14 @@ class Company(ResourceMixin, db.Model):
             .update({Company.trial_active: not Company.trial_active})
 
         return db.session.commit()
+
+    def group_and_count_users(self):
+        """
+        Perform a group by/count on all users.
+
+        :return: dict
+        """
+        # Get list of users that belong to company.
+        users = User.query.filter(User.company_id == self.id)
+
+        return users.count()

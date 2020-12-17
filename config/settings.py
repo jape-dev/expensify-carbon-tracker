@@ -217,7 +217,7 @@ STRIPE_PLANS = {
     '0': {
         'id': 'gold',
         'name': 'Gold',
-        'amount': 12000,
+        'amount': 10,
         'currency': STRIPE_CURRENCY,
         'interval': 'month',
         'interval_count': 1,

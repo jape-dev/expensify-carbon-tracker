@@ -15,9 +15,12 @@ from canopact.blueprints.company.models import Company
 from canopact.blueprints.user.models import User
 from canopact.blueprints.company.forms import InviteForm
 from canopact.blueprints.user.forms import SignupForm
+from canopact.blueprints.admin.forms import SearchForm, BulkDeleteForm
 from canopact.blueprints.user.decorators import (anonymous_required,
                                                  role_required)
-from canopact.blueprints.billing.decorators import subscription_required
+from sqlalchemy import text
+# from canopact.blueprints.billing.decorators import subscription_required
+from canopact.blueprints.billing.models.subscription import Subscription
 import itsdangerous
 from itsdangerous import URLSafeTimedSerializer
 from lib.util_datetime import tzware_datetime
@@ -70,35 +73,40 @@ def invite_signup(token, email):
 
     form = SignupForm()
     form.email.data = email
-    form.company.data = company.name
+    form.name.data = company.name
+    form.industry.data = company.industry
+    form.employees.data = company.employees
+    form.country.data = company.country
     form.invited = True
 
     if form.validate_on_submit():
+        # Increment the per user billing quantity.
+        if company.payment_id:
+            s = Subscription()
+            s.add(company)
+
+        # Create the new user.
         u = User()
-        c = Company()
-
-        form.populate_obj(c)
-        c.save()
-
         form.populate_obj(u)
         u.password = User.encrypt_password(request.form.get('password'))
-        u.company_id = c.id
+        u.role = 'member'
+        u.company_id = company.id
         u.email_confirmed = True
         u.email_confirmed_on = tzware_datetime()
         u.save()
 
         if login_user(u):
-            flash('Thanks for registering!')
+            flash('Thank you for registering. Welcome to Canopact', 'success')
             return redirect(url_for('user.settings'))
 
     return render_template('user/signup.html', form=form, token=token,
                            email=email)
 
 
-@company.route('/company/portal', methods=['GET'])
+@company.route('/portal', methods=['GET'])
 @login_required
 @role_required('company_admin')
-@subscription_required
+# @subscription_required
 def portal():
     """
     Route for company_admin's to access their company portal.
@@ -107,8 +115,30 @@ def portal():
         Flask.render_template: company portal page.
 
     """
-    c = Company.query.get(current_user.company_id)
-    days_left_on_trial = c.days_left_on_trial()
+    company = Company.query.get(current_user.company_id)
+    days_left_on_trial = company.days_left_on_trial()
 
-    return render_template('company/portal.html',
+    return render_template('company/portal.html', company=company,
                            days_left_on_trial=days_left_on_trial)
+
+
+# Users -----------------------------------------------------------------------
+@company.route('/users', defaults={'page': 1})
+@company.route('/users/page/<int:page>')
+def users(page):
+    search_form = SearchForm()
+    bulk_form = BulkDeleteForm()
+
+    sort_by = User.sort_by(request.args.get('sort', 'created_on'),
+                           request.args.get('direction', 'desc'))
+    order_values = '{0} {1}'.format(sort_by[0], sort_by[1])
+
+    paginated_users = User.query \
+        .filter(User.search(request.args.get('q', ''))) \
+        .filter(User.company_id == current_user.company_id) \
+        .order_by(User.role.asc(), User.payment_id, text(order_values)) \
+        .paginate(page, 50, True)
+
+    return render_template('company/user/index.html',
+                           form=search_form, bulk_form=bulk_form,
+                           users=paginated_users)

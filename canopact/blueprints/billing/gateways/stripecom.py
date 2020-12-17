@@ -210,6 +210,31 @@ class Subscription(object):
 
         return customer.subscriptions.retrieve(subscription_id).delete()
 
+    @classmethod
+    def add(cls, customer_id, increment=1, qty=None):
+        """Updates the Subscription's quantity attribute.
+
+        Args:
+            customer_id (str): stripe customer id.
+            increment (int): amount to increase quantity by.
+
+        Returns:
+            qty (int): updated quantity value.
+
+        """
+        customer = stripe.Customer.retrieve(customer_id)
+        subscription_id = customer.subscriptions.data[0].id
+        subscription = customer.subscriptions.retrieve(subscription_id)
+
+        if not qty:
+            qty = int(subscription.quantity)
+            qty += increment
+
+        subscription.quantity = qty
+        subscription.save()
+
+        return qty
+
 
 class Plan(object):
     @classmethod

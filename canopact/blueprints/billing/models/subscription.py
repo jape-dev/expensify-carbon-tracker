@@ -64,12 +64,15 @@ class Subscription(ResourceMixin, db.Model):
 
         return None
 
-    def create(self, user=None, name=None, plan=None, coupon=None, token=None):
+    def create(self, user=None, company=None, name=None, plan=None,
+               coupon=None, token=None):
         """
         Create a recurring subscription.
 
         :param user: User to apply the subscription to
         :type user: User instance
+        :param company: Company to apply the subscription to
+        :type company: Company instance
         :param name: User's billing name
         :type name: str
         :param plan: Plan identifier
@@ -102,6 +105,13 @@ class Subscription(ResourceMixin, db.Model):
                                             user.cancelled_subscription_on)
         user.cancelled_subscription_on = None
 
+        # Update the company account.
+        company.payment_id = customer.id
+        company.billing_name = name
+        company.previous_plan = plan
+        company.cancelled_subscription_on = None
+        company.trial_active = False
+
         # Set the subscription details.
         self.user_id = user.id
         self.plan = plan
@@ -116,6 +126,7 @@ class Subscription(ResourceMixin, db.Model):
                                  **CreditCard.extract_card_params(customer))
 
         db.session.add(user)
+        db.session.add(company)
         db.session.add(credit_card)
         db.session.add(self)
 
@@ -123,12 +134,14 @@ class Subscription(ResourceMixin, db.Model):
 
         return True
 
-    def update(self, user=None, coupon=None, plan=None):
+    def update(self, user=None, company=None, coupon=None, plan=None):
         """
         Update an existing subscription.
 
         :param user: User to apply the subscription to
         :type user: User instance
+        :param company: Company to apply the subscription to
+        :type company: Company instance
         :param coupon: Coupon code to apply
         :type coupon: str
         :param plan: Plan identifier
@@ -157,12 +170,14 @@ class Subscription(ResourceMixin, db.Model):
 
         return True
 
-    def cancel(self, user=None, discard_credit_card=True):
+    def cancel(self, user=None, company=None, discard_credit_card=True):
         """
         Cancel an existing subscription.
 
         :param user: User to apply the subscription to
         :type user: User instance
+        :param company: Company to apply the subscription to
+        :type company: Company instance
         :param discard_credit_card: Delete the user's credit card
         :type discard_credit_card: bool
         :return: bool
@@ -173,7 +188,12 @@ class Subscription(ResourceMixin, db.Model):
         user.cancelled_subscription_on = datetime.datetime.now(pytz.utc)
         user.previous_plan = user.subscription.plan
 
+        company.payment_id = None
+        company.cancelled_subscription_on = datetime.datetime.now(pytz.utc)
+        company.previous_plan = user.subscription.plan
+
         db.session.add(user)
+        db.session.add(company)
         db.session.delete(user.subscription)
 
         # Explicitly delete the credit card because the FK is on the
@@ -187,13 +207,33 @@ class Subscription(ResourceMixin, db.Model):
 
         return True
 
-    def update_payment_method(self, user=None, credit_card=None,
+    def add(self, company, **kwargs):
+        """Add a user to an existing Subscription
+
+        Args:
+            company (models.Company): instance of a company.
+
+        Returns:
+            bool: True if user added.
+
+        """
+        quantity = PaymentSubscription.add(company.payment_id, **kwargs)
+        company.subscriptions = quantity
+
+        db.session.add(company)
+        db.session.commit()
+
+        return True
+
+    def update_payment_method(self, user=None, company=None, credit_card=None,
                               name=None, token=None):
         """
         Update the subscription.
 
         :param user: User to modify
         :type user: User instance
+        :param company: Company to modify
+        :type company: Company instance
         :param credit_card: Card to modify
         :type credit_card: Credit Card instance
         :param name: User's billing name
@@ -207,6 +247,7 @@ class Subscription(ResourceMixin, db.Model):
 
         customer = PaymentCard.update(user.payment_id, token)
         user.name = name
+        company.billing_name = name
 
         # Update the credit card.
         new_card = CreditCard.extract_card_params(customer)
@@ -216,6 +257,7 @@ class Subscription(ResourceMixin, db.Model):
         credit_card.is_expiring = new_card.get('is_expiring')
 
         db.session.add(user)
+        db.session.add(company)
         db.session.add(credit_card)
 
         db.session.commit()

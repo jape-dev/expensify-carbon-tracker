@@ -3,8 +3,68 @@
 {% block title %}Company - Portal{% endblock %}
 
 {% block body %}
-
-<h1> Company Portal</h1>
-<p>Days left on trial: {{ days_left_on_trial }}</p>
-
+  <div class="row">
+    <div class="col-md-4">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <a href="{{ url_for('admin.coupons') }}">Billing</a>
+          <span class="pull-right text-muted">
+          </span>
+        </div>
+        <div class="panel-body">
+        {% if company.trial_active: %}
+          <h4>Subscription: Free Trial</h4>
+          <h5 class="small text-muted">
+            Days left on trial: {{ days_left_on_trial }}
+          </h5>
+        {% else %}
+          <h4>Subscription: Canopact Gold</h4>
+        {% endif %}
+        <hr>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <a href="{{ url_for('company.users') }}">Users</a>
+          <span class="pull-right text-muted">
+          </span>
+        </div>
+        <div class="panel-body">
+            <div class="progress">
+            </div>
+        </div>
+        <div class="list-group">
+            <a href="{{ url_for('company.invite') }}"
+                class="list-group-item">
+                Invite Team Members
+            </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a href="{{ url_for('admin.users') }}">Integrations</a>
+            <span class="pull-right text-muted">
+            </span>
+          </div>
+          <div class="panel-body">
+              <div class="progress">
+              </div>
+          </div>
+          <div class="list-group">
+            <a href="{{ url_for('user.salesforce_login') }}"
+                class="list-group-item">
+                Connect Salesforce Account
+            </a>
+            <a href="{{ url_for('user.expensify_login') }}"
+                class="list-group-item">
+                Connect Expensify Account
+            </a>
+        </div>
+        </div>
+      </div>
+  </div>
 {% endblock %}

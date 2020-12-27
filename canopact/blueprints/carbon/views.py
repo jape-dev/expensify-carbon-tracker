@@ -23,11 +23,10 @@ carbon = Blueprint('carbon', __name__, template_folder='templates')
 
 # Dashboard -------------------------------------------------------------------
 @email_confirm_required()
-@carbon.route('/carbon', methods=['GET', 'POST'])
+@carbon.route('/carbon/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Renders template for the carbon dashboard"""
-    return render_template('dashboard.html',
-                           report_id=5)
+    return render_template('dashboard/index.html')
 
 
 # Routes Cleaner --------------------------------------------------------------

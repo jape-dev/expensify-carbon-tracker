@@ -93,8 +93,8 @@ class User(UserMixin, ResourceMixin, db.Model):
     sf_token_activated_on = db.Column(db.String(128))
 
     # Expensify.
-    partnerUserID = db.Column(db.String(128))
-    partnerUserSecret = db.Column(db.String(128))
+    expensify_id = db.Column(db.String(128))
+    expensify_secret = db.Column(db.String(128))
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.

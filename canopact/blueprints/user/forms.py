@@ -104,9 +104,9 @@ class ExpensifyAPICredentialsForm(ModelForm):
                                 [DataRequired(),
                                  Length(3, 254)])
 
-    partnerUserSecret = StringField('partnerUserSecret',
-                                    [DataRequired(),
-                                     Length(3, 254)])
+    partnerUserSecret = PasswordField('partnerUserSecret',
+                                      [DataRequired(),
+                                       Length(3, 254)])
 
 
 class UpdateLocaleForm(Form):

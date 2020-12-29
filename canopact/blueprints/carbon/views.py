@@ -1,5 +1,6 @@
 """Views for Canopact carbon dashboard."""
 
+from canopact.blueprints.carbon.models.carbon import Carbon
 from canopact.blueprints.carbon.models.expense import Expense
 from canopact.blueprints.carbon.models.report import Report
 from canopact.blueprints.carbon.models.route import Route
@@ -17,16 +18,25 @@ from flask import (
     render_template,
     url_for
 )
+from flask_login import current_user, login_required
 
 
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
 # Dashboard -------------------------------------------------------------------
-@email_confirm_required()
-@carbon.route('/carbon/dashboard', methods=['GET', 'POST'])
-def dashboard():
-    """Renders template for the carbon dashboard"""
-    return render_template('dashboard/index.html')
+@login_required
+@email_confirm_required
+@carbon.route('/carbon/dashboard/<agg>', methods=['GET', 'POST'])
+def dashboard(agg):
+    """Renders template for the carbon dashboard
+
+    Args:
+        agg (str): level of aggregation for the dashboards
+
+    """
+    emissions = Carbon.group_and_sum_emissions(current_user, agg=agg)
+
+    return render_template('dashboard/index.html', emissions=emissions)
 
 
 # Routes Cleaner --------------------------------------------------------------

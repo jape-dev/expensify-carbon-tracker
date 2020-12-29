@@ -47,7 +47,7 @@
           </li>
           {% else %}
           <li>
-            <a href="{{ url_for('carbon.dashboard') }}">
+            <a href="{{ url_for('carbon.dashboard', agg='employee') }}">
               <span class="label label-primary">Dashboard</span>
             </a>
           </li>

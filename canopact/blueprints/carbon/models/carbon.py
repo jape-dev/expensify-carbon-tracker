@@ -7,6 +7,7 @@ Calculates carbon emissions from Expensify report and expense data.
 from canopact.extensions import db
 from flask import current_app
 from lib.util_sqlalchemy import ResourceMixin
+from sqlalchemy import func
 
 
 class Carbon(ResourceMixin, db.Model):
@@ -208,3 +209,52 @@ class Carbon(ResourceMixin, db.Model):
             ems = Carbon.convert(distance, mode, factors)
 
         return cls(distance=distance, **kwargs, **ems)
+
+    @staticmethod
+    def group_and_sum_emissions(user, agg='employee'):
+        """Group and sum user emissions by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns:
+            results (dict): dictionary of different emissions grouped by agg.
+
+        """
+        # Prevent circular import.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.user.models import User
+
+        co2e = func.sum(Carbon.co2e)
+        co2 = func.sum(Carbon.co2)
+        ch4 = func.sum(Carbon.ch4)
+        n2o = func.sum(Carbon.n2o)
+
+        if agg == 'company':
+
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            query = db.session.query(co2e, co2, ch4, n2o) \
+                .join(Expense, Carbon.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id.in_(users)).all()
+        elif agg == 'employee':
+            query = db.session.query(co2e, co2, ch4, n2o) \
+                .join(Expense, Carbon.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id == user.id).all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
+
+        values = query[0]
+        print(values)
+
+        results = {
+            'co2e': round(values[0], 3),
+            'co2': round(values[1], 3),
+            'ch4': round(values[2], 3),
+            'n2o': round(values[3], 3)
+        }
+
+        return results

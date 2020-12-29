@@ -52,8 +52,8 @@ class Report(ResourceMixin, db.Model):
             user = User.query.get(uid)
 
             # Get user Expensify API credentials.
-            partnerUserID = user.partnerUserID
-            partnerUserSecret = user.partnerUserSecret
+            partnerUserID = user.expensify_id
+            partnerUserSecret = user.expensify_secret
 
             # Get all reports from Expensify Integration Server.
             report_list = expensify.main(partnerUserID, partnerUserSecret)

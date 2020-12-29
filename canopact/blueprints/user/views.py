@@ -254,8 +254,8 @@ def expensify_login():
     form = ExpensifyAPICredentialsForm(current_user, uid=current_user.id)
 
     if form.validate_on_submit():
-        current_user.partnerUserID = request.form.get('partnerUserID')
-        current_user.partnerUserSecret = request.form.get('partnerUserSecret')
+        current_user.expensify_id = request.form.get('partnerUserID')
+        current_user.expensify_secret = request.form.get('partnerUserSecret')
 
         current_user.save()
 

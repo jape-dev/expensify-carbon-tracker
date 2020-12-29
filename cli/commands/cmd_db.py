@@ -70,8 +70,8 @@ def seed():
         'email': app.config['SEED_ADMIN_EMAIL'],
         'password': app.config['SEED_ADMIN_PASSWORD'],
         'company_id': app.config['SEED_COMPANY_ID'],
-        'partnerUserID': app.config['SEED_EXPENSIFY_ID'],
-        'partnerUserSecret': app.config['SEED_EXPENSIFY_TOKEN']
+        'expensify_id': app.config['SEED_EXPENSIFY_ID'],
+        'expensify_secret': app.config['SEED_EXPENSIFY_TOKEN']
     }
 
     return User(**user_params).save()

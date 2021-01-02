@@ -4,6 +4,10 @@ Calculates carbon emissions from Expensify report and expense data.
 
 """
 
+import calendar
+import datetime
+from dateutil.relativedelta import relativedelta
+
 from canopact.extensions import db
 from flask import current_app
 from lib.util_sqlalchemy import ResourceMixin
@@ -212,7 +216,7 @@ class Carbon(ResourceMixin, db.Model):
 
     @staticmethod
     def group_and_sum_emissions(user, agg='employee'):
-        """Group and sum user emissions by the agg level.
+        """Group and sum emissions by the agg level.
 
         Args:
             user: (models.User): user to aggregate on.
@@ -248,7 +252,6 @@ class Carbon(ResourceMixin, db.Model):
             raise ValueError("agg must be 'user' or 'company'")
 
         values = query[0]
-        print(values)
 
         results = {
             'co2e': round(values[0], 3),
@@ -258,3 +261,322 @@ class Carbon(ResourceMixin, db.Model):
         }
 
         return results
+
+    @staticmethod
+    def group_and_sum_emissions_monthly(user, agg='employee', prev_months=6):
+        """Group and sum emissions for each month by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns:
+            results (dict): dictionary of different emissions grouped by agg.
+
+        """
+        # Prevent circular imports.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.carbon import Carbon
+
+        start = Carbon.get_prev_months_date(prev_months)
+
+        # Group the journeys by the months
+        sums = func.sum(Carbon.co2e)
+        months = func.extract("month", Expense.expense_created_date)
+
+        # Query database.
+        carbon = db.session.query(months, sums) \
+            .join(Carbon, Expense.expense_id == Carbon.expense_id) \
+            .filter(Expense.expense_created_date >= start) \
+            .filter(Expense.user_id == user.id) \
+            .group_by(months).all()
+
+        # Get monthly labels.
+        labels = Carbon.get_month_labels(prev_months)
+
+        # Map data to labels.
+        carbon = Carbon.month_num_to_string(carbon, order=labels)
+
+        # Extract values and map to a dictionary.
+        values = [v[1] for v in carbon]
+
+        data = {
+            'labels': labels,
+            'datasets': [{
+                'label': 'Emissions',
+                'data': values
+            }]
+        }
+
+        return data
+
+    @staticmethod
+    def group_and_sum_journeys(user, agg='employee', prev_months=6):
+        """Group and sum journeys for each month by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by.
+            prev_months (int): how many previous months to aggregate by.
+
+        Returns:
+            data (dict): dictionary of different emissions grouped by agg.
+
+        """
+        # Prevent circular imports.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.route import Route
+
+        start = Carbon.get_prev_months_date(prev_months)
+
+        # Group the journeys by the months
+        counts = func.count(Route.id)
+        months = func.extract("month", Expense.expense_created_date)
+
+        # Query database.
+        routes = db.session.query(months, counts) \
+            .join(Route, Expense.expense_id == Route.expense_id) \
+            .filter(Expense.expense_created_date >= start) \
+            .filter(Route.invalid == 0) \
+            .filter(Expense.user_id == user.id) \
+            .group_by(months).all()
+
+        # Get monthly labels.
+        labels = Carbon.get_month_labels(prev_months)
+
+        # Map labels to values.
+        routes = Carbon.month_num_to_string(routes, order=labels)
+
+        # Extract values and map to a dictionary.
+        values = [v[1] for v in routes]
+
+        data = {
+            'labels': labels,
+            'datasets': [{
+                'label': 'Journeys',
+                'data': values
+            }]
+        }
+
+        return data
+
+    @staticmethod
+    def group_and_count_transport(user, agg='employee', as_list=False):
+        """Counts the number of journeys for each transport type.
+
+        user: (models.User): user to aggregate on.
+        agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by.
+        as_list (bool): True to return data as lift of tuples, else return as
+            dict.
+
+        Returns:
+            data (dict): dictionary of different transport grouped by agg.
+
+        """
+        # Prevent circular imports.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.route import Route
+
+        counts = func.count(Route.id)
+
+        # Query database.
+        transports = db.session.query(Route.expense_category, counts) \
+            .join(Expense, Route.expense_id == Expense.expense_id) \
+            .filter(Route.invalid == 0) \
+            .filter(Expense.user_id == user.id) \
+            .group_by(Route.expense_category).all()
+
+        # Add percentages to the list.
+        transports = Carbon.calculate_group_percentages(transports)
+
+        if as_list:
+            return transports
+
+        # Seperate tuples into seperate lists.
+        labels = [v[0] for v in transports]
+        counts = [v[1] for v in transports]
+        percentages = [v[2] for v in transports]
+
+        data = {
+            'labels': labels,
+            'data': {
+                'counts': counts,
+                'percentages': percentages
+            }
+        }
+
+        return data
+
+    @staticmethod
+    def group_and_count_routes(user, agg='employee', as_list=False):
+        """Counts the number of journeys for each origin/destination pairing.
+
+        user: (models.User): user to aggregate on.
+        agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by.
+        as_list (bool): True to return data as lift of tuples, else return as
+            dict.
+
+        Returns:
+            data (dict): dictionary of different routes grouped by agg.
+
+        """
+        # Prevent circular import.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.route import Route
+
+        counts = func.count(Route.id)
+
+        # Query database.
+        routes = db.session.query(Route.origin, Route.destination, counts) \
+            .join(Expense, Route.expense_id == Expense.expense_id) \
+            .filter(Route.invalid == 0) \
+            .filter(Route.route_category != 'unit') \
+            .filter(Expense.user_id == user.id) \
+            .group_by(Route.origin, Route.destination).all()
+
+        # Add percentages to the list.
+        routes = Carbon.calculate_group_percentages(routes, value_index=2)
+
+        if as_list:
+            return routes
+
+        # Seperate tuples into seperate lists.
+        origins = [v[0] for v in routes]
+        destinations = [v[1] for v in routes]
+        counts = [v[2] for v in routes]
+        percentages = [v[3] for v in routes]
+
+        data = {
+            'labels': None,
+            'data': {
+                'origins': origins,
+                'destinations': destinations,
+                'counts': counts,
+                'percentages': percentages
+            }
+        }
+
+        return data
+
+    @staticmethod
+    def get_month_labels(n, reverse=True):
+        """Get list of month abbreviation for previous `n` months.
+
+        Args:
+            n (int): number of months back from current month to include
+                in labels.
+            reverse (bool): True to reverse list to start with earliest month.
+
+        Returns:
+            labels (list): list of month abbreviations. E.g.
+                ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+        """
+        double_months_list = calendar.month_abbr[1:] * 2
+        today_month = datetime.datetime.now().month + 12
+        first_month = today_month - n
+        labels = double_months_list[first_month:today_month][::-1]
+
+        if reverse:
+            labels.reverse()
+
+        return labels
+
+    @staticmethod
+    def month_num_to_string(data, abbr=True, order=None):
+        """Converts month number into string.
+
+        Args:
+            data (list): list of tuples containing month integer and values.
+                E.g. [(3, 12.0), (1, 7.0), (12, 8.0), (1, 6.0)]
+            abbr (bool): True to convert to abbreviation (e.g. Jan), else will
+                convert to full name (January).
+            order (list): reorder the list to follow a specific order of
+                months.
+
+        Returns:
+            list: updated tuples with month in string format
+
+        """
+        # Iterate through each tuple in the list.
+        for i, t in enumerate(data):
+            li = list(t)  # Convert to list as tuples are immutable.
+            v = int(li[0])
+
+            # Convert month number into name or abbreviation.
+            if abbr:
+                li[0] = calendar.month_abbr[v]
+            else:
+                li[0] = calendar.month_name[v]
+
+            t = tuple(li)  # Convert back to list.
+
+            # Overwrite original tuple in the list.
+            data[i] = t
+
+        # Reorder tuples in list by matching indexes of another list.
+        if order:
+            keys = [m[0] for m in data]
+            for t in order:
+                if t not in keys:
+                    data.append((t, 0))
+
+            # Match indexes of `order` list.
+            d = {v: i for i, v in enumerate(order)}
+            data = [m for m in data if m[0] in order]
+            data = sorted(data, key=lambda x: d[x[0]])
+
+        return data
+
+    @staticmethod
+    def calculate_group_percentages(data, value_index=1, decimals=1):
+        """Calculate the percentages of the sums/counts for each group.
+
+        Args:
+            data (list): list of tuples contatining the group and value. E.g.
+                [('Train', 2), ('Fuel', 5)]
+            value_index (int): index in each tuple that contains the value.
+            decimals (int): number of decimal places to round percentage to.
+
+        Returns:
+            data (list): list of tuples with another element containing the
+                percentage. E.g. [('Train', 2, 29), ('Fuel', 5, 71)]
+
+        """
+        # Get the total of all the values from each tuple in the list.
+        values = [v[value_index] for v in data]
+        total = sum(values)
+
+        # Add a new element tp
+        for i, t in enumerate(data):
+            value = t[value_index]
+            percent = round(((value / total) * 100), decimals)
+            t = (*t, percent)
+            data[i] = t
+
+        return data
+
+    @staticmethod
+    def get_prev_months_date(prev_months, first=True):
+        """Get the date for a given number of months ago.
+
+        prev_months (int):
+        first (bool): True to return first of the month, else return day
+            of prev_months back from current day.
+
+        Returns:
+            start (datetime.date): date `prev_months` ago.
+
+        """
+
+        # Filter records for to only include date range of prev_months.
+        start = datetime.date.today() + relativedelta(months=-prev_months)
+
+        if first:
+            start = start.replace(day=1)
+
+        return start

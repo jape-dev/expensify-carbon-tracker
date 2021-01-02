@@ -26,7 +26,8 @@
 
   {% include "dashboard/navigation.html" %}
 
-  {% with emissions=emissions %}
+  {% with emissions=emissions, journeys=journeys,
+    monthly_carbon=monthly_carbon, routes=routes, transports=transports %}
     {% include "dashboard/charts.html" %}
   {% endwith %}
 

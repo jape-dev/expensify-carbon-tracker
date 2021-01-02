@@ -1,4 +1,8 @@
-"""Views for Canopact carbon dashboard."""
+"""Views for Canopact carbon dashboard.
+
+"""
+
+import json
 
 from canopact.blueprints.carbon.models.carbon import Carbon
 from canopact.blueprints.carbon.models.expense import Expense
@@ -35,8 +39,18 @@ def dashboard(agg):
 
     """
     emissions = Carbon.group_and_sum_emissions(current_user, agg=agg)
+    journeys = Carbon.group_and_sum_journeys(current_user, agg=agg)
+    monthly_carbon = Carbon.group_and_sum_emissions_monthly(current_user,
+                                                            agg=agg,
+                                                            prev_months=8)
+    transports = Carbon.group_and_count_transport(current_user, agg=agg,
+                                                  as_list=True)
+    routes = Carbon.group_and_count_routes(current_user, agg=agg, as_list=True)
 
-    return render_template('dashboard/index.html', emissions=emissions)
+    return render_template('dashboard/index.html', emissions=emissions,
+                           journeys=json.dumps(journeys),
+                           monthly_carbon=json.dumps(monthly_carbon),
+                           routes=routes, transports=transports)
 
 
 # Routes Cleaner --------------------------------------------------------------

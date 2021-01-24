@@ -68,7 +68,7 @@
 {# Render a form for searching. #}
 {%- macro search(endpoint) -%}
   {% call form_tag(endpoint, method='get') %}
-    <label for="q"></label>
+    <label for="q" style="display: None;"></label>
     <div class="input-group md-margin-bottom">
       <input type="text" class="form-control"
              id="q" name="q" value="{{ request.args.get('q', '') }}"

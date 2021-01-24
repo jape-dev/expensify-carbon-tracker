@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import requests
 import sqlalchemy
+from sqlalchemy import or_
 from lib.util_sqlalchemy import ResourceMixin
 
 
@@ -213,6 +214,29 @@ class Route(ResourceMixin, db.Model):
             df = df
 
         return df
+
+    @classmethod
+    def search(cls, query):
+        """
+        Search a resource by 1 or more fields.
+
+        :param query: Search query
+        :type query: str
+        :return: SQLAlchemy filter
+        """
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.report import Report
+
+        if not query:
+            return ''
+
+        search_query = '%{0}%'.format(query)
+        search_chain = (Report.report_name.ilike(search_query),
+                        Expense.expense_merchant.ilike(search_query),
+                        Expense.expense_comment.ilike(search_query),
+                        Expense.expense_category.ilike(search_query))
+
+        return or_(*search_chain)
 
 
 class Distance():

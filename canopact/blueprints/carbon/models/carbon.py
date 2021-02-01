@@ -436,7 +436,8 @@ class Carbon(ResourceMixin, db.Model):
             .filter(Route.invalid == 0) \
             .filter(Route.route_category != 'unit') \
             .filter(Expense.user_id == user.id) \
-            .group_by(Route.origin, Route.destination).all()
+            .group_by(Route.origin, Route.destination) \
+            .all()
 
         # Add percentages to the list.
         routes = Carbon.calculate_group_percentages(routes, value_index=2)

@@ -193,6 +193,7 @@ var Charts = (function() {
 		theme: {
 			'default': '#172b4d',
 			'primary': '#5e72e4',
+			'olive-green': '#446354',
 			'secondary': '#f4f5f7',
 			'info': '#11cdef',
 			'success': '#2dce89',
@@ -234,20 +235,20 @@ var Charts = (function() {
 					elements: {
 						point: {
 							radius: 0,
-							backgroundColor: colors.theme['primary']
+							backgroundColor: colors.theme['olive-green']
 						},
 						line: {
 							tension: .4,
 							borderWidth: 4,
-							borderColor: colors.theme['primary'],
+							borderColor: colors.theme['olive-green'],
 							backgroundColor: colors.transparent,
 							borderCapStyle: 'rounded'
 						},
 						rectangle: {
-							backgroundColor: colors.theme['warning']
+							backgroundColor: colors.theme['olive-green']
 						},
 						arc: {
-							backgroundColor: colors.theme['primary'],
+							backgroundColor: colors.theme['olive-green'],
 							borderColor: (mode == 'dark') ? colors.gray[800] : colors.white,
 							borderWidth: 4
 						}
@@ -882,7 +883,7 @@ var SalesChart = (function() {
           yAxes: [{
             gridLines: {
               lineWidth: 1,
-              color: Charts.colors.gray[900],
+              color: Charts.colors.gray[500],
               zeroLineColor: Charts.colors.gray[900]
             },
             ticks: {

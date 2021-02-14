@@ -42,8 +42,8 @@ class Expensify():
             start_timestamp (datetime): date to fetch reports from.
         """
         if start_timestamp is None:
-            # Default to a month ago.
-            start_timestamp = time.time() - (24 * 3600 * 30)
+            # Default to a year ago.
+            start_timestamp = time.time() - (24 * 3600 * 365.25)
 
         report_filename = self.generate_report(start_timestamp)
         report = self.fetch_file(report_filename)

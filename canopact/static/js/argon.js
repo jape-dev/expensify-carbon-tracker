@@ -193,6 +193,7 @@ var Charts = (function() {
 		theme: {
 			'default': '#172b4d',
 			'primary': '#5e72e4',
+			'olive-green': '#446354',
 			'secondary': '#f4f5f7',
 			'info': '#11cdef',
 			'success': '#2dce89',
@@ -234,20 +235,20 @@ var Charts = (function() {
 					elements: {
 						point: {
 							radius: 0,
-							backgroundColor: colors.theme['primary']
+							backgroundColor: colors.theme['olive-green']
 						},
 						line: {
 							tension: .4,
 							borderWidth: 4,
-							borderColor: colors.theme['primary'],
+							borderColor: colors.theme['olive-green'],
 							backgroundColor: colors.transparent,
 							borderCapStyle: 'rounded'
 						},
 						rectangle: {
-							backgroundColor: colors.theme['warning']
+							backgroundColor: colors.theme['olive-green']
 						},
 						arc: {
-							backgroundColor: colors.theme['primary'],
+							backgroundColor: colors.theme['olive-green'],
 							borderColor: (mode == 'dark') ? colors.gray[800] : colors.white,
 							borderWidth: 4
 						}
@@ -829,6 +830,7 @@ var BarsChart = (function() {
 	//
 
 	var $chart = $('#chart-bars');
+	var journeys = $('#chart-bars').data("journeys");
 
 
 	//
@@ -836,18 +838,12 @@ var BarsChart = (function() {
 	//
 
 	// Init chart
-	function initChart($chart) {
+	function initChart($chart, journeys) {
 
 		// Create chart
 		var ordersChart = new Chart($chart, {
 			type: 'bar',
-			data: {
-				labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-				datasets: [{
-					label: 'Sales',
-					data: [25, 20, 30, 22, 17, 29]
-				}]
-			}
+			data: journeys
 		});
 
 		// Save to jQuery object
@@ -857,7 +853,7 @@ var BarsChart = (function() {
 
 	// Init chart
 	if ($chart.length) {
-		initChart($chart);
+		initChart($chart, journeys);
 	}
 
 })();
@@ -873,11 +869,12 @@ var SalesChart = (function() {
   // Variables
 
   var $chart = $('#chart-sales-dark');
+  var emissions = $('#chart-sales-dark').data("carbon");
 
 
   // Methods
 
-  function init($chart) {
+  function init($chart, emissions) {
 
     var salesChart = new Chart($chart, {
       type: 'line',
@@ -886,13 +883,13 @@ var SalesChart = (function() {
           yAxes: [{
             gridLines: {
               lineWidth: 1,
-              color: Charts.colors.gray[900],
+              color: Charts.colors.gray[500],
               zeroLineColor: Charts.colors.gray[900]
             },
             ticks: {
               callback: function(value) {
                 if (!(value % 10)) {
-                  return '$' + value + 'k';
+                  return value;
                 }
               }
             }
@@ -909,19 +906,13 @@ var SalesChart = (function() {
                 content += '<span class="popover-body-label mr-auto">' + label + '</span>';
               }
 
-              content += '<span class="popover-body-value">$' + yLabel + 'k</span>';
+              content += yLabel;
               return content;
             }
           }
         }
       },
-      data: {
-        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        datasets: [{
-          label: 'Performance',
-          data: [0, 20, 10, 30, 15, 40, 20, 60, 60]
-        }]
-      }
+      data: emissions
     });
 
     // Save to jQuery object
@@ -934,7 +925,7 @@ var SalesChart = (function() {
   // Events
 
   if ($chart.length) {
-    init($chart);
+    init($chart, emissions);
   }
 
 })();

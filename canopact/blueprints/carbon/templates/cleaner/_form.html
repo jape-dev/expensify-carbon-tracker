@@ -4,37 +4,79 @@
 {% set endpoint = 'carbon.routes_edit' %}
 {% set button = 'Save' %}
 
+
+<head>
+  <script>
+    // Build the src tag for the google maps api.
+    var google_maps_key = {{ key|tojson }};
+    
+    function loadScript() {
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = 'https://maps.googleapis.com/maps/api/js?libraries=places' +
+          '&key=' + google_maps_key +'&callback=initAutocomplete';
+      document.body.appendChild(script);
+    }
+    window.onload = loadScript;
+
+    // Function to call Autocomplete api for each input field.
+    function initAutocomplete() {
+      let len = {{ total|tojson }};
+      for (var i = 0; i < len; i++) {
+        // Create origin element ids.
+        var ogn = 'journeys-'+ i + '-origin';
+        var input_ogn = document.getElementById(ogn);
+        var autocomplete = new google.maps.places.Autocomplete(input_ogn);
+        // Create destination element ids.
+        var dst = 'journeys-'+ i + '-destination';
+        var input_dst = document.getElementById(dst);
+        var autocomplete_d = new google.maps.places.Autocomplete(input_dst);
+      }
+    }
+  </script>
+  
+</head>
+
 {% block body %}
-  {{ f.search('carbon.cleaner') }}
 
   {% if routes.count() == 0 %}
     <h3>No results found</h3>
-
-    {% if request.args.get('q') %}
-      <p>Try limiting or removing your search terms.</p>
-    {% else %}
-      <p>There are no routes present.</p>
-    {% endif %}
+    
   {% else %}
-  {% call f.form_tag(endpoint) %}
+
+    <div class="container">
+        <div class="row">
+          <div class="col-xs-8">
+            {{ f.search('carbon.cleaner') }}
+          </div>
+    {% call f.form_tag(endpoint) %}
+        <div class="col-xs-4">
+          <button type="submit" class="btn btn-primary btn-block">
+              {{ button }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+
     <table class="table table-striped">
 
         <thead>
-            <tr>
+          <tr>
             <th class="col-header">
-                {{ items.sort('expense_id', 'Expense Id') }}
+                {{ items.sort('report_name', 'Report') }}
             </th>
             <th class="col-header">
-                {{ items.sort('report_name', 'Report Name') }}
+                {{ items.sort('expense_created_date', 'Date') }}
             </th>
             <th class="col-header">
-                {{ items.sort('expense_merchant', 'Expense Merchant') }}
+                {{ items.sort('expense_merchant', 'Merchant') }}
             </th>
             <th class="col-header">
-                {{ items.sort('expense_comment', 'Expense Comment') }}
+                {{ items.sort('expense_comment', 'Comment') }}
             </th>
             <th class="col-header">
-                {{ items.sort('expense_created_date', 'Expense Created Date') }}
+                {{ items.sort('expense_category', 'Category') }}
             </th>
             <th class="col-header">
                 {{ items.sort('origin', 'Origin') }}
@@ -42,38 +84,30 @@
             <th class="col-header">
                 {{ items.sort('destination', 'Destination') }}
             </th>
-            </tr>
+          </tr>
         </thead>
         <tbody>
-            <tr>
-            {% for journey, route in zip(form.journeys, routes) %}
-                <td>{{ route.expense_id }}</td>
-                <td>{{ route.report_name }}</td>
-                <td>{{ route.expense_merchant }}</td>
-                <td>{{ route.expense_comment }}</td>
-                <td>{{ route.expense_created_date }}</td>
-                <td >
-                {% call f.form_group(journey.origin,
-                                    css_class='sm-margin-bottom hide-label',
-                                    autofocus='autofocus') %}
-                {% endcall %}
-                </td>
-                <td>
-                {% call f.form_group(journey.destination,
-                                    css_class='sm-margin-bottom hide-label',
-                                    autofocus='autofocus') %}
-                {% endcall %}
-                </td>
-            </tr>
-            {% endfor %}
+          <tr>
+          {% for journey, route in zip(form.journeys, routes) %}
+            <td>{{ route.report_name }}</td>
+            <td>{{ route.expense_created_date }}</td>
+            <td>{{ route.expense_merchant }}</td>
+            <td>{{ route.expense_comment }}</td>
+            <td>{{ route.expense_category }}</td>
+            <td>
+              {% call f.form_group(journey.origin,
+                css_class='hide-label') %}
+              {% endcall %}
+            </td>
+            <td>
+              {% call f.form_group(journey.destination,
+                css_class='hide-label') %}
+              {% endcall %}
+            </td>
+          </tr>
+          {% endfor %}
         </tbody>
     </table>
-
-    <div class="col-md-6">
-        <button type="submit" class="btn btn-primary btn-block">
-            {{ button }}
-        </button>
-    </div>
 
     {% endcall %}
   {% endif %}

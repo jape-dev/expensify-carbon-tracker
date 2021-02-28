@@ -31,7 +31,8 @@ from canopact.extensions import (
     db,
     login_manager,
     limiter,
-    babel
+    babel,
+    cache
 )
 
 CELERY_TASK_LIST = [
@@ -122,6 +123,7 @@ def extensions(app):
     login_manager.init_app(app)
     limiter.init_app(app)
     babel.init_app(app)
+    cache.init_app(app)
 
     return None
 

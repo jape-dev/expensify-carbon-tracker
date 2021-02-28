@@ -5,7 +5,7 @@ from celery.schedules import crontab
 DEBUG = True
 LOG_LEVEL = 'DEBUG'  # CRITICAL / ERROR / WARNING / INFO / DEBUG
 
-SERVER_NAME = 'local.docker:8000'
+SERVER_NAME = 'localhost:8000'
 SECRET_KEY = 'insecurekeyfordev'
 
 # Flask-Mail.
@@ -88,6 +88,10 @@ CELERYBEAT_SCHEDULE = {
 db_uri = 'postgresql://canopact:devpassword@postgres:5432/canopact'
 SQLALCHEMY_DATABASE_URI = db_uri
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Caching.
+CACHE_TYPE = 'simple'
+CACHE_DEFAULT_TIMEOUT = 300
 
 # Salesforce.
 SF_CLIENT_ID = None

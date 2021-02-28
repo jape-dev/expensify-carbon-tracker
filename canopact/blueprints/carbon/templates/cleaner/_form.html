@@ -58,10 +58,9 @@
       </div>
     </div>
 
-
+  <div class="card">
     <table class="table table-striped">
-
-        <thead>
+        <thead class="thead-light">
           <tr>
             <th class="col-header">
                 {{ items.sort('report_name', 'Report') }}
@@ -108,7 +107,7 @@
           {% endfor %}
         </tbody>
     </table>
-
+  </div>
     {% endcall %}
   {% endif %}
 {% endblock %}

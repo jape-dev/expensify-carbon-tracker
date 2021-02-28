@@ -1,4 +1,5 @@
 {% import 'macros/items.html' as items %}
+{% import 'macros/form.html' as f with context %}
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -24,12 +25,21 @@
       <div class="container-fluid">
         <div class="header-body">
           <div class="row align-items-center py-4">
-            <div class="col-lg-6 col-7">
+            <div class="col-lg-4 col-5">
               <h6 class="h2 text-white d-inline-block mb-0">Canopy Dashboard</h6>
             </div>
-            <div class="col-lg-6 col-5 text-right">
-              <a href="{{ url_for('carbon.dashboard', agg='employee') }}" class="btn btn-sm btn-neutral">Employee</a>
-              <a href="{{ url_for('carbon.dashboard', agg='company') }}" class="btn btn-sm btn-neutral">Company</a>
+            <div class="col-lg-8 col-7 float-right">
+              <div class="row float-right">
+                {% call f.form_tag('carbon.dashboard', agg='employee') %}
+                  {% call f.form_group(form.date, css_class='form-inline') %}
+                  <input type="submit" class="btn btn-margin btn-sm btn-neutral">
+                  {% endcall %}
+                {% endcall %}
+              </div> <br /> <br />
+              <div class="row float-right">
+                  <a href="{{ url_for('carbon.dashboard', agg='employee') }}" class="btn btn-margin btn-sm btn-neutral" style="width: 11.5rem;">Employee </a>
+                  <a href="{{ url_for('carbon.dashboard', agg='company') }}" class="btn btn-margin btn-sm btn-neutral btn-padded" style="width: 11.5rem;">Company</a>
+              </div>
             </div>
           </div>
           <!-- Card stats -->
@@ -40,62 +50,22 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">CO2 EQUIVALENT</h5>
-                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions['co2e'] }}</span>
-                    </div>
-                    <div class="col-auto">
-                      <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
-                        <i class="ni ni-active-40"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="mt-3 mb-0 text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
-                    <span class="text-nowrap text-black-50">Since last month</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6">
-              <div class="card card-stats">
-                <!-- Card body -->
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">CARBON DIOXIDE</h5>
-                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions['co2'] }}</span>
-                    </div>
-                    <div class="col-auto">
-                      <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
-                        <i class="ni ni-chart-pie-35"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="mt-3 mb-0 text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
-                    <span class="text-nowrap text-black-50">Since last month</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6">
-              <div class="card card-stats">
-                <!-- Card body -->
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">METHANE</h5>
-                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions['ch4'] }}</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">TOTAL CO2E</h5>
+                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions['co2e'] }} kg</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
-                        <i class="ni ni-money-coins"></i>
+                        <i class="ni ni-world"></i>
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
-                    <span class="text-nowrap text-black-50">Since last month</span>
+                  <p class="mt-3 mb-0 text-lg">
+                  {% if emissions_change['co2e'] <= 0 %}
+                    <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ emissions_change['co2e'] }}%</span>       
+                  {% else %}
+                    <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ emissions_change['co2e'] }}%</span> 
+                  {% endif %}
+                  <span class="text-nowrap text-black-50">Compared to previous month</span>
                   </p>
                 </div>
               </div>
@@ -106,18 +76,69 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">NITROUS OXIDE</h5>
-                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions['n2o'] }}</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">CO2e per km</h5>
+                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions_per_distance['co2e'] }} kg</span>
                     </div>
                     <div class="col-auto">
-                      <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-delivery-fast"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="mt-3 mb-0 text-lg">
+                  {% if per_distance_change['co2e'] <= 0 %}
+                    <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ per_distance_change['co2e'] }}%</span>       
+                  {% else %}
+                    <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ per_distance_change['co2e'] }}%</span> 
+                  {% endif %}
+                    <span class="text-nowrap text-black-50">Compared to previous month</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">CO2e per journey</h5>
+                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions_per_journeys['co2e'] }} kg</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-square-pin"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="mt-3 mb-0 text-lg">
+                  {% if per_journeys_change['co2e'] <= 0 %}
+                    <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ per_journeys_change['co2e'] }}%</span>       
+                  {% else %}
+                    <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ per_journeys_change['co2e'] }}%</span> 
+                  {% endif %}
+                    <span class="text-nowrap text-black-50">Compared to previous month</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">CANOPY COVER</h5>
+                      <span class="h2 text-black-50 font-weight-bold mb-0">Coming soon</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
                         <i class="ni ni-chart-bar-32"></i>
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
-                    <span class="text-nowrap text-black-50">Since last month</span>
+                  <p class="mt-3 mb-0 text-lg">
+                    <span class="text-nowrap text-white">Compared to previous month</span>
                   </p>
                 </div>
               </div>
@@ -135,21 +156,27 @@
             <div class="card-header bg-transparent">
               <div class="row align-items-center">
                 <div class="col">
-                  <h6 class="text-light text-uppercase ls-1 mb-1">Overview</h6>
-                  <h5 class="h3 text-black mb-0">CO2e Emissions</h5>
+                  <h6 class="text-uppercase text-muted ls-1 mb-1">Overview</h6>
+                  <h5 class="h3 text-black mb-0">CO2e Emissions (kg)</h5>
                 </div>
                 <div class="col">
                   <ul class="nav nav-pills justify-content-end">
-                    <li class="nav-item mr-2 mr-md-0" data-toggle="chart" data-target="#chart-sales-dark" data-update='{"data":{"datasets":[{"data":[0, 20, 10, 30, 15, 40, 20, 60, 60]}]}}'>
+                    <li class="nav-item mr-2 mr-md-0" data-toggle="chart" data-target="#chart-sales-dark" data-update="{{ emissions_line }}"">
                       <a href="#" class="nav-link py-2 px-3 active" data-toggle="tab">
-                        <span class="d-none d-md-block">Month</span>
+                        <span class="d-none d-md-block">Total</span>
                         <span class="d-md-none">M</span>
                       </a>
                     </li>
-                    <li class="nav-item" data-toggle="chart" data-target="#chart-sales-dark" data-update='{"data":{"datasets":[{"data":[0, 20, 5, 25, 10, 30, 15, 40, 40]}]}}'>
+                    <li class="nav-item" data-toggle="chart" data-target="#chart-sales-dark" data-update="{{ per_km_line }}">
                       <a href="#" class="nav-link py-2 px-3" data-toggle="tab">
-                        <span class="d-none d-md-block">Week</span>
+                        <span class="d-none d-md-block">Per Km</span>
                         <span class="d-md-none">W</span>
+                      </a>
+                    </li>
+                    <li class="nav-item mr-2 mr-md-0" data-toggle="chart" data-target="#chart-sales-dark" data-update="{{ per_journey_line }}"">
+                      <a href="#" class="nav-link py-2 px-3" data-toggle="tab">
+                        <span class="d-none d-md-block">Per Journey</span>
+                        <span class="d-md-none">M</span>
                       </a>
                     </li>
                   </ul>
@@ -185,7 +212,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-xl-8">
+        <div class="col-xl-7">
           <div class="card-fixed">
             <div class="card-header border-0">
               <div class="row align-items-center">
@@ -193,7 +220,9 @@
                   <h3 class="mb-0">Routes</h3>
                 </div>
                 <div class="col text-right">
-                  <a href="#!" class="btn btn-sm btn-primary">See all</a>
+                  <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                    <i class="ni ni-map-big"></i>
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,16 +231,16 @@
               <table class="table align-items-center table-flush">
                 <thead class="thead-light">
                   <tr>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('origin', 'Origin') }}
                     </th>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('destination', 'Destination') }}
                     </th>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('count', 'Journeys') }}
                     </th>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('%', '%') }}
                     </th>
                   </tr>
@@ -222,7 +251,16 @@
                     <td>{{ route[0] }}</td>
                     <td>{{ route[1] }}</td>
                     <td>{{ route[2] }}</td>
-                    <td>{{ route[3] }}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <span class="mr-2">{{ route[3] }}</span>
+                        <div>
+                          <div class="progress">
+                            <div class="progress-bar .bg-gradient-olive-green" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width: {{ route[3] }}%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -230,7 +268,7 @@
             </div>
           </div>
         </div>
-        <div class="col-xl-4">
+        <div class="col-xl-5">
           <div class="card-fixed">
             <div class="card-header border-0">
               <div class="row align-items-center">
@@ -238,7 +276,9 @@
                   <h3 class="mb-0">Transport</h3>
                 </div>
                 <div class="col text-right">
-                  <a href="#!" class="btn btn-sm btn-primary">See all</a>
+                  <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                    <i class="ni ni-bus-front-12"></i>
+                  </div>
                 </div>
               </div>
             </div>
@@ -247,13 +287,13 @@
               <table class="table align-items-center table-flush">
                 <thead class="thead-light">
                   <tr>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('transport', 'Transport') }}
                     </th>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('journeys', 'Journeys') }}
                     </th>
-                    <th class="col-header">
+                    <th>
                       {{ items.sort('%', '%') }}
                     </th>
                   </tr>
@@ -268,7 +308,7 @@
                           <span class="mr-2">{{ transport[2] }}</span>
                           <div>
                             <div class="progress">
-                              <div class="progress-bar .bg-gradient-olive-green" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
+                              <div class="progress-bar .bg-gradient-olive-green" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width: {{ transport[2] }}%;"></div>
                             </div>
                           </div>
                         </div>

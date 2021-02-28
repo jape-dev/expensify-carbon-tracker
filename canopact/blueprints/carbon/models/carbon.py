@@ -7,6 +7,7 @@ Calculates carbon emissions from Expensify report and expense data.
 import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
+import math
 
 from canopact.extensions import db
 from flask import current_app
@@ -215,13 +216,15 @@ class Carbon(ResourceMixin, db.Model):
         return cls(distance=distance, **kwargs, **ems)
 
     @staticmethod
-    def group_and_sum_emissions(user, agg='employee'):
+    def group_and_sum_emissions(user, agg='employee', prev_month=False,
+                                **kwargs):
         """Group and sum emissions by the agg level.
 
         Args:
             user: (models.User): user to aggregate on.
             agg (str): 'employee' to aggregate by employee, 'company' to
                 aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
 
         Returns:
             results (dict): dictionary of different emissions grouped by agg.
@@ -236,6 +239,17 @@ class Carbon(ResourceMixin, db.Model):
         ch4 = func.sum(Carbon.ch4)
         n2o = func.sum(Carbon.n2o)
 
+        if prev_month:
+            start = Carbon.get_prev_months_date(prev_months=1, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=1, first=False,
+                                              **kwargs)
+        else:
+            start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=0, first=False,
+                                              **kwargs)
+
         if agg == 'company':
 
             users = db.session.query(User.id) \
@@ -243,10 +257,78 @@ class Carbon(ResourceMixin, db.Model):
 
             query = db.session.query(co2e, co2, ch4, n2o) \
                 .join(Expense, Carbon.expense_id == Expense.expense_id) \
-                .filter(Expense.user_id.in_(users)).all()
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
         elif agg == 'employee':
             query = db.session.query(co2e, co2, ch4, n2o) \
                 .join(Expense, Carbon.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id == user.id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
+
+        values = query[0]
+
+        results = {
+            'co2e': Carbon.round_to_n(values[0], 2),
+            'co2': Carbon.round_to_n(values[1], 2),
+            'ch4': Carbon.round_to_n(values[2], 2),
+            'n2o': Carbon.round_to_n(values[3], 2)
+        }
+
+        return results
+
+    @staticmethod
+    def group_and_sum_distance(user, agg='employee', prev_month=False,
+                               **kwargs):
+        """Group and sum distance travelled in km by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
+
+        Returns:
+            results (dict): sum of distances  grouped by agg.
+
+        """
+        # Prevent circular import.
+        from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.user.models import User
+
+        if prev_month:
+            start = Carbon.get_prev_months_date(prev_months=1, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=1, first=False,
+                                              **kwargs)
+        else:
+            start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=0, first=False,
+                                              **kwargs)
+
+        distance = func.sum(Route.distance)
+
+        if agg == 'company':
+
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            query = db.session.query(distance) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        elif agg == 'employee':
+            query = db.session.query(distance) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
                 .filter(Expense.user_id == user.id).all()
         else:
             raise ValueError("agg must be 'user' or 'company'")
@@ -254,16 +336,78 @@ class Carbon(ResourceMixin, db.Model):
         values = query[0]
 
         results = {
-            'co2e': round(values[0], 3),
-            'co2': round(values[1], 3),
-            'ch4': round(values[2], 3),
-            'n2o': round(values[3], 3)
+            'distance': Carbon.round_to_n(values[0], 2),
         }
 
         return results
 
     @staticmethod
-    def group_and_sum_emissions_monthly(user, agg='employee', prev_months=6):
+    def group_and_count_journeys(user, agg='employee', prev_month=False,
+                                 **kwargs):
+        """Group and count number of journeys by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
+
+        Returns:
+            results (dict): count of journeys grouped by agg.
+
+        """
+        # Prevent circular import.
+        from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.user.models import User
+
+        if prev_month:
+            start = Carbon.get_prev_months_date(prev_months=1, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=1, first=False,
+                                              **kwargs)
+        else:
+            start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=0, first=False,
+                                              **kwargs)
+
+        journeys = func.count(Route.id)
+
+        if agg == 'company':
+
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            query = db.session.query(journeys) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Route.invalid == 0) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        elif agg == 'employee':
+            query = db.session.query(journeys) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id == user.id) \
+                .filter(Route.invalid == 0) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
+
+        values = query[0]
+
+        results = {
+            'journeys': Carbon.round_to_n(values[0], 2),
+        }
+
+        return results
+
+    @staticmethod
+    def group_and_sum_emissions_monthly(user, agg='employee', prev_months=6,
+                                        **kwargs):
         """Group and sum emissions for each month by the agg level.
 
         Args:
@@ -279,7 +423,8 @@ class Carbon(ResourceMixin, db.Model):
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.carbon import Carbon
 
-        start = Carbon.get_prev_months_date(prev_months)
+        start = Carbon.get_prev_months_date(prev_months, **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, **kwargs)
 
         # Group the journeys by the months
         sums = func.sum(Carbon.co2e)
@@ -289,17 +434,18 @@ class Carbon(ResourceMixin, db.Model):
         carbon = db.session.query(months, sums) \
             .join(Carbon, Expense.expense_id == Carbon.expense_id) \
             .filter(Expense.expense_created_date >= start) \
+            .filter(Expense.expense_created_date < end) \
             .filter(Expense.user_id == user.id) \
             .group_by(months).all()
 
         # Get monthly labels.
-        labels = Carbon.get_month_labels(prev_months)
+        labels = Carbon.get_month_labels(prev_months, **kwargs)
 
         # Map data to labels.
         carbon = Carbon.month_num_to_string(carbon, order=labels)
 
         # Extract values and map to a dictionary.
-        values = [v[1] for v in carbon]
+        values = [Carbon.round_to_n(v[1], 2) for v in carbon]
 
         data = {
             'labels': labels,
@@ -312,8 +458,9 @@ class Carbon(ResourceMixin, db.Model):
         return data
 
     @staticmethod
-    def group_and_sum_journeys(user, agg='employee', prev_months=6):
-        """Group and sum journeys for each month by the agg level.
+    def group_and_count_journeys_monthly(user, agg='employee', prev_months=6,
+                                         **kwargs):
+        """Group and count journeys for each month by the agg level.
 
         Args:
             user: (models.User): user to aggregate on.
@@ -322,17 +469,71 @@ class Carbon(ResourceMixin, db.Model):
             prev_months (int): how many previous months to aggregate by.
 
         Returns:
-            data (dict): dictionary of different emissions grouped by agg.
+            data (dict): dictionary of different journeys grouped by agg.
 
         """
         # Prevent circular imports.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
 
-        start = Carbon.get_prev_months_date(prev_months)
+        start = Carbon.get_prev_months_date(prev_months, **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, **kwargs)
 
         # Group the journeys by the months
         counts = func.count(Route.id)
+        months = func.extract("month", Expense.expense_created_date)
+
+        # Query database.
+        routes = db.session.query(months, counts) \
+            .join(Route, Expense.expense_id == Route.expense_id) \
+            .filter(Expense.expense_created_date >= start) \
+            .filter(Expense.expense_created_date < end) \
+            .filter(Route.invalid == 0) \
+            .filter(Expense.user_id == user.id) \
+            .group_by(months).all()
+
+        # Get monthly labels.
+        labels = Carbon.get_month_labels(prev_months, **kwargs)
+
+        # Map labels to values.
+        routes = Carbon.month_num_to_string(routes, order=labels)
+
+        # Extract values and map to a dictionary.
+        values = [v[1] for v in routes]
+
+        data = {
+            'labels': labels,
+            'datasets': [{
+                'label': 'Journeys',
+                'data': values
+            }]
+        }
+
+        return data
+
+    @staticmethod
+    def group_and_sum_distance_monthly(user, agg='employee', prev_months=6,
+                                       **kwargs):
+        """Group and sum distance for each month by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by.
+            prev_months (int): how many previous months to aggregate by.
+
+        Returns:
+            data (dict): dictionary of different distances grouped by agg.
+
+        """
+        # Prevent circular imports.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.carbon.models.route import Route
+
+        start = Carbon.get_prev_months_date(prev_months, **kwargs)
+
+        # Group the journeys by the months
+        counts = func.sum(Route.distance)
         months = func.extract("month", Expense.expense_created_date)
 
         # Query database.
@@ -355,7 +556,7 @@ class Carbon(ResourceMixin, db.Model):
         data = {
             'labels': labels,
             'datasets': [{
-                'label': 'Journeys',
+                'label': 'Distance',
                 'data': values
             }]
         }
@@ -363,7 +564,8 @@ class Carbon(ResourceMixin, db.Model):
         return data
 
     @staticmethod
-    def group_and_count_transport(user, agg='employee', as_list=False):
+    def group_and_count_transport(user, agg='employee', as_list=False,
+                                  **kwargs):
         """Counts the number of journeys for each transport type.
 
         user: (models.User): user to aggregate on.
@@ -382,12 +584,20 @@ class Carbon(ResourceMixin, db.Model):
 
         counts = func.count(Route.id)
 
+        start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                            **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
+
         # Query database.
         transports = db.session.query(Route.expense_category, counts) \
             .join(Expense, Route.expense_id == Expense.expense_id) \
             .filter(Route.invalid == 0) \
             .filter(Expense.user_id == user.id) \
-            .group_by(Route.expense_category).all()
+            .filter(Expense.expense_created_date >= start) \
+            .filter(Expense.expense_created_date <= end) \
+            .group_by(Route.expense_category) \
+            .order_by(counts.desc()) \
+            .all()
 
         # Add percentages to the list.
         transports = Carbon.calculate_group_percentages(transports)
@@ -411,7 +621,7 @@ class Carbon(ResourceMixin, db.Model):
         return data
 
     @staticmethod
-    def group_and_count_routes(user, agg='employee', as_list=False):
+    def group_and_count_routes(user, agg='employee', as_list=False, **kwargs):
         """Counts the number of journeys for each origin/destination pairing.
 
         user: (models.User): user to aggregate on.
@@ -428,6 +638,10 @@ class Carbon(ResourceMixin, db.Model):
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
 
+        start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                            **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
+
         counts = func.count(Route.id)
 
         # Query database.
@@ -436,7 +650,10 @@ class Carbon(ResourceMixin, db.Model):
             .filter(Route.invalid == 0) \
             .filter(Route.route_category != 'unit') \
             .filter(Expense.user_id == user.id) \
+            .filter(Expense.expense_created_date >= start) \
+            .filter(Expense.expense_created_date <= end) \
             .group_by(Route.origin, Route.destination) \
+            .order_by(counts.desc()) \
             .all()
 
         # Add percentages to the list.
@@ -464,13 +681,251 @@ class Carbon(ResourceMixin, db.Model):
         return data
 
     @staticmethod
-    def get_month_labels(n, reverse=True):
+    def emissions_per_distance(user, agg='employee', prev_month=False,
+                               **kwargs):
+        """
+        Gets the emissons in kg divided by the number of km travelled.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
+
+        Returns:
+            data (dict): dictionary of emissions grouped by agg.
+
+        """
+        emissions = Carbon.group_and_sum_emissions(user, agg,
+                                                   prev_month=prev_month,
+                                                   **kwargs)
+        distance = Carbon.group_and_sum_distance(user, agg,
+                                                 prev_month=prev_month,
+                                                 **kwargs)
+        distance = distance['distance']
+
+        results = {k: Carbon.round_to_n(v / distance, 2) if distance != 0
+                   else 0 for k, v in emissions.items()}
+
+        return results
+
+    @staticmethod
+    def emissions_per_journeys(user, agg='employee', prev_month=False,
+                               **kwargs):
+        """
+        Gets the emissons in kg divided by the number of journeys.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns:
+            data (dict): dictionary of different routes grouped by agg.
+
+        """
+        emissions = Carbon.group_and_sum_emissions(user, agg,
+                                                   prev_month=prev_month,
+                                                   **kwargs)
+        journeys = Carbon.group_and_count_journeys(user, agg,
+                                                   prev_month=prev_month,
+                                                   **kwargs)
+        journeys = journeys['journeys']
+
+        results = {k: Carbon.round_to_n(v / journeys, 2) if journeys != 0
+                   else 0 for k, v in emissions.items()}
+
+        return results
+
+    @staticmethod
+    def emissions_metrics(user, agg="employee", prev_month=False, **kwargs):
+        """Wrapper function to produce emissions metrics:
+            * current month's emissions.
+            * previous month's emissions.
+            * percentage change between current and previous month.
+
+        Calls:
+            * Carbon.group_and_sum_emissions()
+            * Carbon.group_and_sum_emissions()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
+
+        Returns
+            tuple: emissions for current month, previous month and percentage
+                difference.
+        """
+        current = Carbon.group_and_sum_emissions(user, agg=agg, **kwargs)
+        previous = Carbon.group_and_sum_emissions(user, agg=agg,
+                                                  prev_month=True, **kwargs)
+        change = Carbon.emissions_percentage_diff(current, previous)
+
+        return current, previous, change
+
+    @staticmethod
+    def emissions_metrics_monthly(user, agg='employee', prev_months=6,
+                                  emissions=None, journeys=None,
+                                  distances=None, **kwargs):
+        """Calculate kpi metrics each month aggregated by the agg level.
+
+        metrics include:
+            * monthly emissions kg
+            * monthly emissions per distance kg / km
+            * monthly emissions per journey kg / journey
+
+        Calls:
+            * Carbon.group_and_sum_emissions_monthly()
+            * Carbon.group_and_count_journeys_monthly()
+            * Carbon.group_and_sum_distance_monthly()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by.
+            prev_months (int): how many previous months to aggregate by.
+            emissions (list): monthly emissions values.
+
+        Returns:
+            data (dict): dictionary of different distances grouped by agg.
+
+        """
+        if not emissions:
+            emissions = \
+                Carbon.group_and_sum_emissions_monthly(user, agg=agg,
+                                                       prev_months=prev_months,
+                                                       **kwargs)
+        em_values = emissions['datasets'][0]['data']
+
+        if not journeys:
+            journeys = Carbon. \
+                group_and_count_journeys_monthly(user, agg=agg,
+                                                 prev_months=prev_months,
+                                                 **kwargs)
+
+        jny_values = journeys['datasets'][0]['data']
+
+        if not distances:
+            distances = \
+                Carbon.group_and_sum_distance_monthly(user, agg=agg,
+                                                      prev_months=prev_months,
+                                                      **kwargs)
+        dst_values = distances['datasets'][0]['data']
+
+        em_per_jrny = [Carbon.round_to_n(int(e)/int(j), 2) if j != 0 else 0
+                       for e, j in zip(em_values, jny_values)]
+        em_per_dst = [Carbon.round_to_n(int(e)/int(d), 2) if d != 0 else 0
+                      for e, d in zip(em_values, dst_values)]
+
+        data = {
+            'labels': emissions['labels'],
+            'datasets': {
+                'emissions': {"data": {"datasets": [{"data": em_values}]}},
+                'per_journey': {"data": {"datasets": [{"data": em_per_jrny}]}},
+                'per_km': {"data": {"datasets": [{"data": em_per_dst}]}}
+            }
+        }
+
+        return data
+
+    @staticmethod
+    def per_journeys_metrics(user, agg="employee", **kwargs):
+        """Wrapper function to produce emissions metrics:
+            * current month's emissions per journey.
+            * previous month's emissions per journey.
+            * percentage change between current and previous month.
+
+        Calls:
+            * Carbon.emissions_per_journeys()
+            * Carbon.emissions_per_journeys()
+            * Carbon.emissions_percentage_diff()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns
+            tuple: emissions for current month, previous month and percentage
+                difference.
+
+        """
+        current = Carbon.emissions_per_journeys(user, agg=agg, **kwargs)
+        previous = Carbon.emissions_per_journeys(user, agg=agg,
+                                                 prev_month=True, **kwargs)
+        change = Carbon.emissions_percentage_diff(current, previous)
+
+        return current, previous, change
+
+    @staticmethod
+    def per_distance_metrics(user, agg="employee", **kwargs):
+        """Wrapper function to produce emissions metrics:
+            * current month's emissions per distance.
+            * previous month's emissions per distance.
+            * percentage change between current and previous month.
+
+        Calls:
+            * Carbon.emissions_per_distance()
+            * Carbon.emissions_per_distance()
+            * Carbon.emissions_percentage_diff()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns
+            tuple: emissions for current month, previous month and percentage
+                difference.
+
+        """
+        current = Carbon.emissions_per_distance(user, agg=agg, **kwargs)
+        previous = Carbon.emissions_per_distance(user, agg=agg,
+                                                 prev_month=True, **kwargs)
+        change = Carbon.emissions_percentage_diff(current, previous)
+
+        return current, previous, change
+
+    @staticmethod
+    def emissions_percentage_diff(base, compare):
+        """Calculate the percentage difference between twos sets of emmissions
+
+        base (dict): emissions to to calculate percentage change to.
+        compare (dict): emissions to to calculate percentage from.
+
+        Returns:
+            results (dict): emissions with percentage differences.
+
+        """
+
+        def handle_zeros(k):
+            """Selector function to handle cases where base values are zero.
+
+            """
+            if base[k] == 0:
+                if compare.get(k) == 0:
+                    return 0
+                else:
+                    return - 100
+            else:
+                return Carbon.round_to_n(100 * ((base[k] - compare.get(k))
+                                         / base[k]), 2)
+
+        results = {k: handle_zeros(k) for k in base}
+
+        return results
+
+    @staticmethod
+    def get_month_labels(n, reverse=True, date=None):
         """Get list of month abbreviation for previous `n` months.
 
         Args:
             n (int): number of months back from current month to include
                 in labels.
             reverse (bool): True to reverse list to start with earliest month.
+            date (datetime.date) latest date to compare from.
 
         Returns:
             labels (list): list of month abbreviations. E.g.
@@ -478,7 +933,12 @@ class Carbon(ResourceMixin, db.Model):
 
         """
         double_months_list = calendar.month_abbr[1:] * 2
-        today_month = datetime.datetime.now().month + 12
+
+        if date:
+            today_month = date.month + 12
+        else:
+            today_month = datetime.datetime.now().month + 12
+
         first_month = today_month - n
         labels = double_months_list[first_month:today_month][::-1]
 
@@ -555,17 +1015,18 @@ class Carbon(ResourceMixin, db.Model):
         # Add a new element tp
         for i, t in enumerate(data):
             value = t[value_index]
-            percent = round(((value / total) * 100), decimals)
+            percent = Carbon.round_to_n(((value / total) * 100), decimals)
             t = (*t, percent)
             data[i] = t
 
         return data
 
     @staticmethod
-    def get_prev_months_date(prev_months, first=True):
+    def get_prev_months_date(prev_months, date=None, first=True, **kwargs):
         """Get the date for a given number of months ago.
 
-        prev_months (int):
+        prev_months (int): number of previos months to take differenc from.
+        date (datetime.date): date to start from.
         first (bool): True to return first of the month, else return day
             of prev_months back from current day.
 
@@ -575,9 +1036,33 @@ class Carbon(ResourceMixin, db.Model):
         """
 
         # Filter records for to only include date range of prev_months.
-        start = datetime.date.today() + relativedelta(months=-prev_months)
+        if not date:
+            start = datetime.date.today() + relativedelta(months=-prev_months)
+        else:
+            start = date + relativedelta(months=-prev_months)
 
         if first:
             start = start.replace(day=1)
 
         return start
+
+    @staticmethod
+    def round_to_n(x, n):
+        """Rounds number to n significant figures
+
+        Args:
+            x (float): number to be rounded.
+            n (int): number of significant figures to round to.
+
+        Returns:
+            float: x rounded to n significant figures
+
+        """
+        if x is None:
+            return 0
+        elif x == 0:
+            return x
+        elif x < 1 and x > 0:
+            return round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1))
+        else:
+            return round(x, n)

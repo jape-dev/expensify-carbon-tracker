@@ -8,6 +8,7 @@ from wtforms.validators import (
   Length,
   Optional
 )
+from wtforms.widgets.html5 import DateInput
 
 
 class SearchForm(Form):
@@ -22,3 +23,7 @@ class RouteForm(Form):
 class JourneysForm(Form):
     ids = []
     journeys = FieldList(FormField(RouteForm))
+
+
+class DateForm(Form):
+    date = StringField(widget=DateInput())

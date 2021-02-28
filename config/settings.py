@@ -89,6 +89,10 @@ db_uri = 'postgresql://canopact:devpassword@postgres:5432/canopact'
 SQLALCHEMY_DATABASE_URI = db_uri
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+# Caching.
+CACHE_TYPE = 'simple'
+CACHE_DEFAULT_TIMEOUT = 300
+
 # Salesforce.
 SF_CLIENT_ID = None
 SF_CLIENT_SECRET = None

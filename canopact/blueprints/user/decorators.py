@@ -66,3 +66,31 @@ def email_confirm_required(url='/'):
         return decorated_function
 
     return decorator
+
+
+def expensify_required(url='/settings/expensify_login'):
+    """
+    Restrict users from accessing page if they have not submitted their
+    expensify credentials.
+
+    Args:
+        url (str): URL to be redirected to if expensify credentials
+            not submitted.
+
+    Return:
+        function
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.expensify_id:
+                flash('Please authenticate your Expensify API to view this '
+                      'page. Check that your Expensify credentials are up to '
+                      'date.', 'error')
+                return redirect(url)
+
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator

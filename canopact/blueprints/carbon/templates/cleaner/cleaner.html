@@ -30,47 +30,48 @@
         </div>
       </div>
     </div>
-
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th class="col-header">
-              {{ items.sort('report_name', 'Report') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('expense_created_date', 'Date') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('expense_merchant', 'Merchant') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('expense_comment', 'Comment') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('expense_category', 'Category') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('origin', 'Origin') }}
-          </th>
-          <th class="col-header">
-              {{ items.sort('destination', 'Destination') }}
-          </th>
-      </tr>
-      </thead>
-      <tbody>
-        {% for route in routes %}
+    <div class="card">
+      <table class="table">
+        <thead class="thead-light">
           <tr>
-            <td>{{ route.report_name }}</td>
-            <td>{{ route.expense_created_date }}</td>
-            <td>{{ route.expense_merchant }}</td>
-            <td>{{ route.expense_comment }}</td>
-            <td>{{ route.expense_category }}</td>
-            <td>{{ route.origin }}</td>
-            <td>{{ route.destination }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <th class="col-header">
+                {{ items.sort('report_name', 'Report') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('expense_created_date', 'Date') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('expense_merchant', 'Merchant') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('expense_comment', 'Comment') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('expense_category', 'Category') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('origin', 'Origin') }}
+            </th>
+            <th class="col-header">
+                {{ items.sort('destination', 'Destination') }}
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+          {% for route in routes %}
+            <tr>
+              <td>{{ route.report_name }}</td>
+              <td>{{ route.expense_created_date }}</td>
+              <td>{{ route.expense_merchant }}</td>
+              <td>{{ route.expense_comment }}</td>
+              <td>{{ route.expense_category }}</td>
+              <td>{{ route.origin }}</td>
+              <td>{{ route.destination }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+  </div>
 
   {% endif %}
 {% endblock %}

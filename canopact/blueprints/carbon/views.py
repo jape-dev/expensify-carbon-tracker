@@ -2,6 +2,8 @@
 
 """
 
+
+import datetime
 import json
 
 from canopact.blueprints.carbon.models.carbon import Carbon
@@ -11,10 +13,14 @@ from canopact.blueprints.carbon.models.route import Route
 from canopact.blueprints.carbon.forms import (
     SearchForm,
     RouteForm,
-    JourneysForm
+    JourneysForm,
+    DateForm
 )
-from canopact.blueprints.user.decorators import email_confirm_required
-from canopact.extensions import db
+from canopact.blueprints.user.decorators import (
+    email_confirm_required,
+    expensify_required
+)
+from canopact.extensions import db, cache
 from flask import (
     Blueprint,
     current_app,
@@ -27,13 +33,30 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy import text
 
-
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
 # Dashboard -------------------------------------------------------------------
-@login_required
-@email_confirm_required
+@cache.cached(timeout=300, key_prefix="date_input")
+def get_date_input():
+    """Get value from date input form and convert to date.
+
+    Caches date input so that it persists across different levels of
+        aggregation.
+
+    Returns:
+        date (datetime.datetime): date from input form.
+
+    """
+    date = request.form.get('date')
+    date = datetime.datetime.strptime(date, "%Y-%m-%d")
+
+    return date
+
+
 @carbon.route('/carbon/dashboard/<agg>', methods=['GET', 'POST'])
+@expensify_required()
+@email_confirm_required()
+@login_required
 def dashboard(agg):
     """Renders template for the carbon dashboard
 
@@ -41,19 +64,62 @@ def dashboard(agg):
         agg (str): level of aggregation for the dashboards
 
     """
-    emissions = Carbon.group_and_sum_emissions(current_user, agg=agg)
-    journeys = Carbon.group_and_sum_journeys(current_user, agg=agg)
+    form = DateForm()
+
+    # Date input.
+    if form.validate_on_submit():
+        cache.clear()
+        date = get_date_input()
+    else:
+        try:
+            date = get_date_input()
+        except BaseException:
+            date = datetime.date.today()
+
+    # KPI cards.
+    emissions, prev_emissions, emissions_change = \
+        Carbon.emissions_metrics(current_user, agg=agg, date=date)
+    per_journeys, prev_per_journeys, per_journeys_change = \
+        Carbon.per_journeys_metrics(current_user, agg=agg, date=date)
+    per_distance, prev_per_distance, per_distance_change = \
+        Carbon.per_distance_metrics(current_user, agg=agg, date=date)
+
+    # Charts.
+    journeys = Carbon.group_and_count_journeys_monthly(current_user, agg=agg,
+                                                       date=date)
     monthly_carbon = Carbon.group_and_sum_emissions_monthly(current_user,
                                                             agg=agg,
-                                                            prev_months=8)
+                                                            prev_months=8,
+                                                            date=date)
+    line = Carbon.emissions_metrics_monthly(current_user, agg=agg,
+                                            prev_months=8,
+                                            emissions=monthly_carbon,
+                                            date=date)
+
+    # Line chart filters.
+    emissions_line = line["datasets"]["emissions"]
+    per_journey_line = line["datasets"]["per_journey"]
+    per_km_line = line["datasets"]["per_km"]
+
+    # Tables.
     transports = Carbon.group_and_count_transport(current_user, agg=agg,
-                                                  as_list=True)
-    routes = Carbon.group_and_count_routes(current_user, agg=agg, as_list=True)
+                                                  as_list=True, date=date)
+    routes = Carbon.group_and_count_routes(current_user, agg=agg, as_list=True,
+                                           date=date)
 
     return render_template('dashboard/index.html', emissions=emissions,
+                           emissions_change=emissions_change,
+                           emissions_per_journeys=per_journeys,
+                           per_journeys_change=per_journeys_change,
+                           emissions_per_distance=per_distance,
+                           per_distance_change=per_distance_change,
                            journeys=json.dumps(journeys),
                            monthly_carbon=json.dumps(monthly_carbon),
-                           routes=routes, transports=transports)
+                           emissions_line=json.dumps(emissions_line),
+                           per_journey_line=json.dumps(per_journey_line),
+                           per_km_line=json.dumps(per_km_line),
+                           routes=routes, transports=transports,
+                           form=form)
 
 
 # Routes Cleaner --------------------------------------------------------------
@@ -92,8 +158,10 @@ def get_routes():
     return routes
 
 
-@email_confirm_required()
 @carbon.route('/carbon/cleaner')
+@expensify_required()
+@email_confirm_required()
+@login_required
 def cleaner():
     """Retrieves all expenses with an invalid and renders cleaner template."""
 
@@ -105,6 +173,9 @@ def cleaner():
 
 
 @carbon.route('/carbon/cleaner/edit', methods=['GET', 'POST'])
+@expensify_required()
+@email_confirm_required()
+@login_required
 def routes_edit():
     """Opens editor mode to let user enter in valid origin and destination.
 

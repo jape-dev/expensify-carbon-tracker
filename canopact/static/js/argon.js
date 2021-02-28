@@ -313,7 +313,10 @@ var Charts = (function() {
 				drawTicks: false
 			},
 			ticks: {
-				padding: 20
+				padding: 20,
+				callback: function(value) {
+					return value
+				}
 			},
 			maxBarThickness: 10
 		});
@@ -385,6 +388,7 @@ var Charts = (function() {
 	// Update options
 	function updateOptions(elem) {
 		var options = elem.data('update');
+		var labels = elem.data('label')
 		var $target = $(elem.data('target'));
 		var $chart = $target.data('chart');
 
@@ -400,32 +404,33 @@ var Charts = (function() {
 
 	// Toggle ticks
 	function toggleTicks(elem, $chart) {
+		
+		var prefix = elem.data('prefix') ? elem.data('prefix') : '';
+		var suffix = elem.data('suffix') ? elem.data('suffix') : '';
 
-		if (elem.data('prefix') !== undefined || elem.data('prefix') !== undefined) {
-			var prefix = elem.data('prefix') ? elem.data('prefix') : '';
-			var suffix = elem.data('suffix') ? elem.data('suffix') : '';
+		$chart.options.scales.xAxes[0].ticks.callback = function(value) {
+			return value;
+		}
 
-			// Update ticks
-			$chart.options.scales.yAxes[0].ticks.callback = function(value) {
-				if (!(value % 10)) {
-					return prefix + value + suffix;
-				}
+		// Update ticks
+		$chart.options.scales.yAxes[0].ticks.callback = function(value) {
+			if (!(value % 10)) {
+				return prefix + value + suffix;
+			}
+		}
+
+		// Update tooltips
+		$chart.options.tooltips.callbacks.label = function(item, data) {
+			var label = data.datasets[item.datasetIndex].label || '';
+			var yLabel = item.yLabel;
+			var content = '';
+
+			if (data.datasets.length > 1) {
+				content += label;
 			}
 
-			// Update tooltips
-			$chart.options.tooltips.callbacks.label = function(item, data) {
-				var label = data.datasets[item.datasetIndex].label || '';
-				var yLabel = item.yLabel;
-				var content = '';
-
-				if (data.datasets.length > 1) {
-					content += '<span class="popover-body-label mr-auto">' + label + '</span>';
-				}
-
-				content += '<span class="popover-body-value">' + prefix + yLabel + suffix + '</span>';
-				return content;
-			}
-
+			content += prefix + yLabel + suffix;
+			return content;
 		}
 	}
 
@@ -893,6 +898,13 @@ var SalesChart = (function() {
                 }
               }
             }
+		  }],
+		  xAxes: [{
+            ticks: {
+              callback: function(value) {
+                  return value;
+              }
+            }
           }]
         },
         tooltips: {
@@ -903,7 +915,7 @@ var SalesChart = (function() {
               var content = '';
 
               if (data.datasets.length > 1) {
-                content += '<span class="popover-body-label mr-auto">' + label + '</span>';
+                content += label;
               }
 
               content += yLabel;

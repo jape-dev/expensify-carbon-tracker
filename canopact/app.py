@@ -5,8 +5,7 @@ from logging.handlers import SMTPHandler
 import stripe
 
 from werkzeug.contrib.fixers import ProxyFix
-from flask import Flask, render_template, request
-from flask_login import current_user
+from flask import Flask, render_template
 from celery import Celery
 from itsdangerous import URLSafeTimedSerializer
 
@@ -16,7 +15,6 @@ from canopact.blueprints.contact import contact
 from canopact.blueprints.user import user
 from canopact.blueprints.billing import billing
 from canopact.blueprints.billing import stripe_webhook
-from canopact.blueprints.bet import bet
 from canopact.blueprints.carbon import carbon
 from canopact.blueprints.company import company
 from canopact.blueprints.user.models import User
@@ -97,13 +95,11 @@ def create_app(settings_override=None):
     app.register_blueprint(user)
     app.register_blueprint(billing)
     app.register_blueprint(stripe_webhook)
-    app.register_blueprint(bet)
     app.register_blueprint(carbon)
     app.register_blueprint(company)
     template_processors(app)
     extensions(app)
     authentication(app, User)
-    locale(app)
     app.jinja_env.globals.update(zip=zip)
 
     return app
@@ -165,22 +161,6 @@ def authentication(app, user_model):
         user_uid = data[0]
 
         return user_model.query.get(user_uid)
-
-
-def locale(app):
-    """
-    Initialize a locale for the current request.
-
-    :param app: Flask application instance
-    :return: str
-    """
-    @babel.localeselector
-    def get_locale():
-        if current_user.is_authenticated:
-            return current_user.locale
-
-        accept_languages = app.config.get('LANGUAGES').keys()
-        return request.accept_languages.best_match(accept_languages)
 
 
 def middleware(app):

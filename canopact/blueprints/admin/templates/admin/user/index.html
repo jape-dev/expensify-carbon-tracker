@@ -33,7 +33,7 @@
               {{ items.sort('name') }}
             </th>
             <th class="col-header">
-              {{ items.sort('last_bet_on', 'Activity') }}
+              {{ items.sort('last_sign_in', 'Activity') }}
             </th>
             <th class="col-header">
               {{ items.sort('sign_in_count', 'Sign in count') }}
@@ -68,8 +68,6 @@
                 <div class="pull-left">
                   {{ account.role_icon_for(user) }}
                 </div>
-                <h4 class="media-heading">{{ user.username }}</h4>
-
                 <p class="text-muted">{{ user.email }}</p>
               </a>
             </td>
@@ -79,14 +77,6 @@
                 <time class="from-now"
                       data-datetime="{{ user.last_sign_in_on }}">
                   {{ user.last_sign_in_on }}
-                </time>
-              {% endif %}
-              {% if user.last_bet_on %}
-                <br/>
-                Latest bet:
-                <time class="from-now"
-                      data-datetime="{{ user.last_bet_on }}">
-                  {{ user.last_bet_on }}
                 </time>
               {% endif %}
             </td>

@@ -13,10 +13,6 @@
            class="list-group-item">
            Invite Team Members
         </a>
-        <a href="{{ url_for('user.salesforce_login') }}"
-           class="list-group-item">
-           Connect Salesforce Account
-        </a>
         <a href="{{ url_for('user.expensify_login') }}"
            class="list-group-item">
            Connect Expensify Account
@@ -25,35 +21,7 @@
            class="list-group-item">
           Update email and password
         </a>
-        <a href="{{ url_for('user.update_locale') }}"
-           class="list-group-item">
-          Update language
-        </a>
-        {% if current_user.username %}
-          <span class="list-group-item quarter-faded text-muted">
-            Your username is
-            <strong>{{ current_user.username }}</strong>
-          </span>
-        {% else %}
-          <a href="{{ url_for('user.welcome') }}"
-             class="list-group-item">
-            Pick a username
-          </a>
-        {% endif %}
       </div>
-
-      <h2>Betting</h2>
-      <div class="list-group">
-        <a href="{{ url_for('bet.history') }}" class="list-group-item">
-          Betting history
-        </a>
-        <span class="list-group-item quarter-faded text-warning">
-          You have
-          <strong>{{ current_user.coins }}</strong> coins
-        </span>
-      </div>
-      <a href="{{ url_for('billing.purchase_coins') }}"
-         class="btn btn-primary">Buy more coins</a>
     </div>
     <div class="col-md-5 col-md-push-1 col-md-offset-1">
       {% if current_user.subscription %}
@@ -75,29 +43,24 @@
             Billing details
           </a>
           <a class="list-group-item"
-             href="{{ url_for('billing.update') }}">
-            Change plan
-          </a>
-          <a class="list-group-item"
              href="{{ url_for('billing.cancel') }}">
             <span class="text-muted">Cancel subscription</span>
           </a>
         </div>
       {% else %}
-        <h2>Subscribe today</h2>
-        <h4 class="text-muted">
-          Hey buddy, why aren't you subscribed?
-        </h4>
+        <h2>Billing</h2>
+        <h4 class="text-muted margin-bottom">Subscription: Free Trial</h4>
+        <div class="panel panel-default">
+          <div class="panel-body">
+              Days left on trial: {{ days_left_on_trial }}
+          <hr>
+            <a href="{{ url_for('billing.pricing') }}"
+            class="btn btn-primary">Subscribe</a>
+          </div>
+        </div>
 
-        <p>
-          Now that you've created an account, wouldn't it be unbelievably
-          amazing to unlock everything by becoming a subscriber today?
-        </p>
-        <a href="{{ url_for('billing.pricing') }}"
-           class="btn btn-primary">Learn more</a>
-
-        <hr/>
         {% if current_user.invoices %}
+        <hr/>
           <h3>Previous subscription info</h3>
           <div class="list-group">
             <a class="list-group-item"

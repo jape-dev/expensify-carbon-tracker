@@ -178,32 +178,6 @@ class TestSignup(ViewTestMixin):
         new_user = User.find_by_identity('new@local.host')
         assert new_user.password != 'password'
 
-    def test_welcome(self, users):
-        """ Create username successfully. """
-        self.login()
-
-        user = {'username': 'hello'}
-        response = self.client.post(url_for('user.welcome'), data=user,
-                                    follow_redirects=True)
-
-        assert_status_with_message(200, response,
-                                   'Sign up is complete, enjoy our services.')
-
-    def test_welcome_with_existing_username(self, users):
-        """ Create username failure due to username already existing. """
-        self.login()
-
-        u = User.find_by_identity('admin@local.host')
-        u.username = 'hello'
-        u.save()
-
-        user = {'username': 'hello'}
-        response = self.client.post(url_for('user.welcome'), data=user,
-                                    follow_redirects=True)
-
-        assert_status_with_message(200, response,
-                                   'You already picked a username.')
-
 
 class TestSettings(ViewTestMixin):
     def test_settings_page(self):
@@ -323,16 +297,3 @@ class TestUpdateLocale(ViewTestMixin):
 
         assert_status_with_message(200, response,
                                    'Your locale settings have been updated.')
-
-    def test_klingon_locale(self, users):
-        """ Klingon locale works successfully. """
-        user = User.find_by_identity('admin@local.host')
-        user.locale = 'kl'
-        user.save()
-
-        self.login()
-
-        response = self.client.get(url_for('billing.purchase_coins'))
-
-        # Klingon for "Card".
-        assert_status_with_message(200, response, 'Chaw')

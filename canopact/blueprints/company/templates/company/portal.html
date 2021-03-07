@@ -18,7 +18,7 @@
             Days left on trial: {{ days_left_on_trial }}
           </h5>
         {% else %}
-          <h4>Subscription: Canopact Gold</h4>
+          <h4>Subscription: Canopact Grow</h4>
         {% endif %}
         <hr>
         </div>
@@ -31,10 +31,6 @@
           <span class="pull-right text-muted">
           </span>
         </div>
-        <div class="panel-body">
-            <div class="progress">
-            </div>
-        </div>
         <div class="list-group">
             <a href="{{ url_for('company.invite') }}"
                 class="list-group-item">
@@ -44,26 +40,18 @@
       </div>
     </div>
     <div class="col-md-4">
-        <div class="panel panel-default">
-          <div class="panel-heading">
+      <div class="panel panel-default">
+        <div class="panel-heading">
             <a href="{{ url_for('admin.users') }}">Integrations</a>
             <span class="pull-right text-muted">
             </span>
           </div>
-          <div class="panel-body">
-              <div class="progress">
-              </div>
-          </div>
           <div class="list-group">
-            <a href="{{ url_for('user.salesforce_login') }}"
-                class="list-group-item">
-                Connect Salesforce Account
-            </a>
             <a href="{{ url_for('user.expensify_login') }}"
                 class="list-group-item">
                 Connect Expensify Account
             </a>
-        </div>
+          </div>
         </div>
       </div>
   </div>

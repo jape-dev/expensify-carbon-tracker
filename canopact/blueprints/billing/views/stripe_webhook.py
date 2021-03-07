@@ -29,7 +29,6 @@ def event():
 
         if parsed_event.get('total') > 0:
             plan = Subscription.get_plan_by_id(user.subscription.plan)
-            user.add_coins(plan)
     except InvalidRequestError as e:
         # We could not parse the event.
         return render_json(422, {'error': str(e)})

@@ -10,7 +10,6 @@ from canopact.blueprints.billing.models.coupon import Coupon
 from canopact.blueprints.billing.gateways.stripecom import Card as PaymentCard
 from canopact.blueprints.billing.gateways.stripecom import \
     Customer as PaymentCustomer, Subscription as PaymentSubscription
-from canopact.blueprints.bet.models.coin import add_subscription_coins
 
 
 class Subscription(ResourceMixin, db.Model):
@@ -98,11 +97,6 @@ class Subscription(ResourceMixin, db.Model):
         user.payment_id = customer.id
         user.name = name
         user.previous_plan = plan
-        user.coins = add_subscription_coins(user.coins,
-                                            Subscription.get_plan_by_id(
-                                                user.previous_plan),
-                                            Subscription.get_plan_by_id(plan),
-                                            user.cancelled_subscription_on)
         user.cancelled_subscription_on = None
 
         # Update the company account.
@@ -152,11 +146,6 @@ class Subscription(ResourceMixin, db.Model):
 
         user.previous_plan = user.subscription.plan
         user.subscription.plan = plan
-        user.coins = add_subscription_coins(user.coins,
-                                            Subscription.get_plan_by_id(
-                                                user.previous_plan),
-                                            Subscription.get_plan_by_id(plan),
-                                            user.cancelled_subscription_on)
 
         if coupon:
             user.subscription.coupon = coupon

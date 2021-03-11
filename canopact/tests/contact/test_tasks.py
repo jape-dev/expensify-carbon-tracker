@@ -12,7 +12,7 @@ class TestTasks(object):
         """
         form = {
           'email': 'james@canopact.com',
-          'message': 'Test message from Snake Eyes.'
+          'message': 'Test message from Canopact.'
         }
 
         with mail.record_messages() as outbox:

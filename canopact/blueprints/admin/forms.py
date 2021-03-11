@@ -13,14 +13,12 @@ from wtforms.validators import (
   DataRequired,
   Length,
   Optional,
-  Regexp,
   NumberRange
 )
-from wtforms_components import Unique
 
 from lib.locale import Currency
 from lib.util_wtforms import ModelForm, choices_from_dict
-from canopact.blueprints.user.models import db, User
+from canopact.blueprints.user.models import User
 from canopact.blueprints.billing.models.coupon import Coupon
 
 
@@ -39,22 +37,6 @@ class BulkDeleteForm(Form):
 
 
 class UserForm(ModelForm):
-    username_message = 'Letters, numbers and underscores only please.'
-
-    coins = IntegerField('Coins', [DataRequired(),
-                                   NumberRange(min=1, max=2147483647)])
-
-    username = StringField(validators=[
-        Unique(
-            User.username,
-            get_session=lambda: db.session
-        ),
-        Optional(),
-        Length(1, 16),
-        # Part of the Python 3.7.x update included updating flake8 which means
-        # we need to explicitly define our regex pattern with r'xxx'.
-        Regexp(r'^\w+$', message=username_message)
-    ])
 
     role = SelectField('Privileges', [DataRequired()],
                        choices=choices_from_dict(User.ROLE,

@@ -16,7 +16,6 @@ from lib.util_sqlalchemy import ResourceMixin, AwareDateTime, tzware_datetime
 from canopact.blueprints.billing.models.credit_card import CreditCard
 from canopact.blueprints.billing.models.subscription import Subscription
 from canopact.blueprints.billing.models.invoice import Invoice
-from canopact.blueprints.bet.models.bet import Bet
 from canopact.blueprints.carbon.models.activity import Activity
 from canopact.blueprints.carbon.models.report import Report
 from canopact.extensions import db
@@ -40,7 +39,6 @@ class User(UserMixin, ResourceMixin, db.Model):
     subscription = db.relationship(Subscription, uselist=False,
                                    backref='users', passive_deletes=True)
     invoices = db.relationship(Invoice, backref='users', passive_deletes=True)
-    bets = db.relationship(Bet, backref='bets', passive_deletes=True)
     reports = db.relationship(Report, backref='reports', passive_deletes=True)
     activities = db.relationship(Activity, backref='reports',
                                  passive_deletes=True)
@@ -51,7 +49,6 @@ class User(UserMixin, ResourceMixin, db.Model):
                      )
     active = db.Column('is_active', db.Boolean(), nullable=False,
                        server_default='1')
-    username = db.Column(db.String(24), unique=True, index=True)
     email = db.Column(db.String(255), unique=True, index=True, nullable=False,
                       server_default='')
     password = db.Column(db.String(128), nullable=False, server_default='')
@@ -72,19 +69,12 @@ class User(UserMixin, ResourceMixin, db.Model):
     cancelled_subscription_on = db.Column(AwareDateTime())
     previous_plan = db.Column(db.String(128))
 
-    # Bet.
-    coins = db.Column(db.BigInteger())
-    last_bet_on = db.Column(AwareDateTime())
-
     # Activity tracking.
     sign_in_count = db.Column(db.Integer, nullable=False, default=0)
     current_sign_in_on = db.Column(AwareDateTime())
     current_sign_in_ip = db.Column(db.String(45))
     last_sign_in_on = db.Column(AwareDateTime())
     last_sign_in_ip = db.Column(db.String(45))
-
-    # Additional settings.
-    locale = db.Column(db.String(5), nullable=False, server_default='en')
 
     # Salesforce.
     sf_instance_url = db.Column(db.String(128))
@@ -104,8 +94,6 @@ class User(UserMixin, ResourceMixin, db.Model):
         self.email_confirmation_sent_on = None
         self.email_confirmed = False
         self.email_confirmed_on = None
-
-        self.coins = 100
 
     @classmethod
     def find_by_identity(cls, identity):
@@ -349,18 +337,6 @@ class User(UserMixin, ResourceMixin, db.Model):
 
         self.current_sign_in_on = datetime.datetime.now(pytz.utc)
         self.current_sign_in_ip = ip_address
-
-        return self.save()
-
-    def add_coins(self, plan):
-        """
-        Add an amount of coins to an existing user.
-
-        :param plan: Subscription plan
-        :type plan: str
-        :return: SQLAlchemy commit results
-        """
-        self.coins += plan['metadata']['coins']
 
         return self.save()
 

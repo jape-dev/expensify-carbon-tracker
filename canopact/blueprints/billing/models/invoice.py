@@ -156,8 +156,8 @@ class Invoice(ResourceMixin, db.Model):
 
         return Invoice.parse_from_api(invoice)
 
-    def create(self, user=None, currency=None, amount=None, coins=None,
-               coupon=None, token=None):
+    def create(self, user=None, currency=None, amount=None, coupon=None,
+               token=None):
         """
         Create an invoice item.
 
@@ -167,8 +167,6 @@ class Invoice(ResourceMixin, db.Model):
         :type amount: str
         :param amount: Amount in cents
         :type amount: int
-        :param coins: Amount of coins
-        :type coins: int
         :param coupon: Coupon code to apply
         :type coupon: str
         :param token: Token returned by JavaScript
@@ -190,9 +188,6 @@ class Invoice(ResourceMixin, db.Model):
         # Redeem the coupon.
         if coupon:
             coupon.redeem()
-
-        # Add the coins to the user.
-        user.coins += coins
 
         # Create the invoice item.
         period_on = datetime.datetime.utcfromtimestamp(charge.get('created'))

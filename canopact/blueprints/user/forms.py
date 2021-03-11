@@ -1,6 +1,6 @@
 from flask_wtf import Form
 from wtforms import HiddenField, StringField, PasswordField, SelectField
-from wtforms.validators import DataRequired, Length, Optional, Regexp
+from wtforms.validators import DataRequired, Length, Optional
 from wtforms_components import EmailField, Email, Unique
 
 from config.settings import LANGUAGES, INDUSTRIES, EMPLOYEES
@@ -13,14 +13,14 @@ import pycountry
 
 class LoginForm(Form):
     next = HiddenField()
-    identity = StringField('Username or email',
+    identity = StringField('Email',
                            [DataRequired(), Length(3, 254)])
     password = PasswordField('Password', [DataRequired(), Length(8, 128)])
     # remember = BooleanField('Stay signed in')
 
 
 class BeginPasswordResetForm(Form):
-    identity = StringField('Username or email',
+    identity = StringField('Email',
                            [DataRequired(),
                             Length(3, 254),
                             ensure_identity_exists])
@@ -65,22 +65,6 @@ class ResendEmailForm(Form):
                            [DataRequired(),
                             Length(3, 254),
                             ensure_identity_exists])
-
-
-class WelcomeForm(ModelForm):
-    username_message = 'Letters, numbers and underscores only please.'
-
-    username = StringField(validators=[
-        Unique(
-            User.username,
-            get_session=lambda: db.session
-        ),
-        DataRequired(),
-        Length(1, 16),
-        # Part of the Python 3.7.x update included updating flake8 which means
-        # we need to explicitly define our regex pattern with r'xxx'.
-        Regexp(r'^\w+$', message=username_message)
-    ])
 
 
 class UpdateCredentialsForm(ModelForm):

@@ -31,7 +31,6 @@ class TestUsers(ViewTestMixin):
         """ Edit this resource successfully. """
         params = {
             'role': 'admin',
-            'username': 'foo',
             'active': True
         }
 

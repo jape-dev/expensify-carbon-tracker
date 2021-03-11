@@ -16,10 +16,3 @@ class TestUser(object):
         """ Token de-serializer returns None when it's been tampered with. """
         user = User.deserialize_token('{0}1337'.format(token))
         assert user is None
-
-    def test_subscribed_user_receives_more_coins(self, users):
-        """ Subscribed user receives more coins. """
-        user = User.find_by_identity('admin@local.host')
-        user.add_coins(Subscription.get_plan_by_id('bronze'))
-
-        assert user.coins == 210

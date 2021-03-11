@@ -85,8 +85,8 @@ def expensify_required(url='/settings/expensify_login'):
         def decorated_function(*args, **kwargs):
             if not current_user.expensify_id:
                 flash('Please authenticate your Expensify API to view this '
-                      'page. Check that your Expensify credentials are up to '
-                      'date.', 'error')
+                      'page or check that your Expensify credentials are up to '
+                      'date.', 'success')
                 return redirect(url)
 
             return f(*args, **kwargs)

@@ -76,7 +76,7 @@ class TestBilling(ViewTestMixin):
 
         params = {
             'stripe_key': 'cus_000',
-            'plan': 'gold',
+            'plan': 'grow',
             'name': 'Foobar Johnson'
         }
 
@@ -110,7 +110,7 @@ class TestBilling(ViewTestMixin):
         self.login(identity='subscriber@local.host')
 
         params = {
-            'submit_gold': ''
+            'submit_grow': ''
         }
 
         response = self.client.post(url_for('billing.update'),
@@ -183,20 +183,3 @@ class TestBilling(ViewTestMixin):
 
         assert_status_with_message(200, response,
                                    'Billing details and history')
-
-    def test_purchase_coins(self, users, mock_stripe):
-        """ Purchase coins requires JavaScript. """
-        self.login()
-
-        params = {
-            'stripe_key': 'cus_000',
-            'coin_bundles': '100',
-            'name': 'Foobar Johnson'
-        }
-
-        response = self.client.post(url_for('billing.purchase_coins'),
-                                    data=params, follow_redirects=True)
-
-        assert_status_with_message(200, response,
-                                   'You must enable JavaScript'
-                                   ' for this request.')

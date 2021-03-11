@@ -23,7 +23,6 @@ from canopact.blueprints.user.forms import (
     BeginPasswordResetForm,
     PasswordResetForm,
     SignupForm,
-    WelcomeForm,
     UpdateCredentialsForm,
     ExpensifyAPICredentialsForm,
     UpdateLocaleForm,
@@ -143,25 +142,6 @@ def signup():
     return render_template('user/signup.html', form=form)
 
 
-@user.route('/welcome', methods=['GET', 'POST'])
-@login_required
-def welcome():
-    if current_user.username:
-        flash('You already picked a username.', 'warning')
-        return redirect(url_for('user.settings'))
-
-    form = WelcomeForm()
-
-    if form.validate_on_submit():
-        current_user.username = request.form.get('username')
-        current_user.save()
-
-        flash('Sign up is complete, enjoy our services.', 'success')
-        return redirect(url_for('user.settings'))
-
-    return render_template('user/welcome.html', form=form)
-
-
 @user.route('/awaiting', methods=['GET', 'POST'])
 def awaiting():
     form = ResendEmailForm()
@@ -192,14 +172,20 @@ def confirm_email(token):
         user.save()
         flash('Thank you for confirming your email address!', 'success')
 
-    return redirect(url_for('user.welcome'))
+    return redirect(url_for('user.settings'))
 
 
 @user.route('/settings')
 @login_required
 @email_confirm_required()
 def settings():
-    return render_template('user/settings.html')
+
+    company = Company.query.get(current_user.company_id)
+    start = tzware_datetime()
+    days_left_on_trial = company.days_left_on_trial(start=start)
+
+    return render_template('user/settings.html', company=company,
+                           days_left_on_trial=days_left_on_trial)
 
 
 @user.route('/settings/update_credentials', methods=['GET', 'POST'])

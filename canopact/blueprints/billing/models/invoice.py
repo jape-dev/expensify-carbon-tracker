@@ -59,8 +59,7 @@ class Invoice(ResourceMixin, db.Model):
             return ''
 
         search_query = '%{0}%'.format(query)
-        search_chain = (User.email.ilike(search_query),
-                        User.username.ilike(search_query))
+        search_chain = (User.email.ilike(search_query))
 
         return or_(*search_chain)
 

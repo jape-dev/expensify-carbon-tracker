@@ -74,10 +74,6 @@ CELERYBEAT_SCHEDULE = {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
         'schedule': 10
     },
-    'fetch-activities': {
-        'task': 'canopact.blueprints.carbon.tasks.fetch_activities',
-        'schedule': 10
-    },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',
         'schedule': crontab(hour=0, minute=1)

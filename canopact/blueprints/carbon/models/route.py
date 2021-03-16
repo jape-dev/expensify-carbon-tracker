@@ -179,6 +179,7 @@ class Route(ResourceMixin, db.Model):
             """Helper function to apply methods from Routes to the `new` DataFrame.
 
             """
+            row['id'] = None
             if row[type_col] != 'expense':
                 row['route_category'] = 'unit'
             else:

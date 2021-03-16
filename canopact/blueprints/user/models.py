@@ -98,14 +98,13 @@ class User(UserMixin, ResourceMixin, db.Model):
     @classmethod
     def find_by_identity(cls, identity):
         """
-        Find a user by their e-mail or username.
+        Find a user by their e-mail.
 
-        :param identity: Email or username
+        :param identity: Email.
         :type identity: str
         :return: User instance
         """
-        return User.query.filter(
-          (User.email == identity) | (User.username == identity)).first()
+        return User.query.filter(User.email == identity).first()
 
     @classmethod
     def encrypt_password(cls, plaintext_password):
@@ -201,8 +200,7 @@ class User(UserMixin, ResourceMixin, db.Model):
             return ''
 
         search_query = '%{0}%'.format(query)
-        search_chain = (User.email.ilike(search_query),
-                        User.username.ilike(search_query))
+        search_chain = (User.email.ilike(search_query))
 
         return or_(*search_chain)
 

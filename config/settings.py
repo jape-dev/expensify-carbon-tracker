@@ -102,6 +102,7 @@ SEED_EXPENSIFY_TOKEN = 'fake_token'
 SEED_ADMIN_EMAIL = 'dev@local.host'
 SEED_ADMIN_PASSWORD = 'devpassword'
 SEED_COMPANY_ID = '999999999'
+SEED_EMAIL_CONFIRMED = True
 REMEMBER_COOKIE_DURATION = timedelta(days=90)
 
 # Google Distance Matrix API.

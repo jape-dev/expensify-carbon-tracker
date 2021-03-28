@@ -74,10 +74,6 @@ CELERYBEAT_SCHEDULE = {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
         'schedule': 10
     },
-    'fetch-activities': {
-        'task': 'canopact.blueprints.carbon.tasks.fetch_activities',
-        'schedule': 10
-    },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',
         'schedule': crontab(hour=0, minute=1)
@@ -106,6 +102,7 @@ SEED_EXPENSIFY_TOKEN = 'fake_token'
 SEED_ADMIN_EMAIL = 'dev@local.host'
 SEED_ADMIN_PASSWORD = 'devpassword'
 SEED_COMPANY_ID = '999999999'
+SEED_EMAIL_CONFIRMED = True
 REMEMBER_COOKIE_DURATION = timedelta(days=90)
 
 # Google Distance Matrix API.

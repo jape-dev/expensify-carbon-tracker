@@ -29,6 +29,12 @@ import pandas as pd
 celery = create_celery_app()
 
 
+def setattrs(_self, **kwargs):
+    """Helper function to set multiple attributes to Activity class"""
+    for k, v in kwargs.items():
+        setattr(_self, k, v)
+
+
 @celery.task(bind=True)
 def fetch_reports(self):
     """Fetch expense reports from Expensify Integration Server.
@@ -74,12 +80,6 @@ def fetch_activities(self):
     """Gets activities from the Salesforce API
 
     """
-
-    def setattrs(_self, **kwargs):
-        """Helper function to set multiple attributes to Activity class"""
-        for k, v in kwargs.items():
-            setattr(_self, k, v)
-
     # Get a list of the currently active user ids.
     user_ids = [u[0] for u in db.session.query(User.id).distinct()]
 
@@ -123,7 +123,7 @@ def calculate_carbon(self):
     distances = distances.where(pd.notnull(distances), None)
 
     # Reduce route cols down to cols of interest and convert to a dictionary.
-    route_df = distances[['expense_id', 'expense_category', 'route_category',
+    route_df = distances[['id', 'expense_id', 'expense_category', 'route_category',
                           'origin', 'destination', 'invalid', 'distance']]
 
     route_dict = route_df.to_dict('records')
@@ -136,8 +136,28 @@ def calculate_carbon(self):
 
     # Save route records to db.
     for d in route_dict:
-        r = Route(**d)
-        r.update_and_save(Route, expense_id=r.expense_id)
+        # from Expense.get_new_expenses().
+        if d['id'] is None:
+            d.pop('id')
+            expense_id = d['expense_id']
+            existing_route = \
+                Route.query.filter_by(expense_id=expense_id).first()
+            # Completely new expense being written for the first time.
+            if existing_route is None:
+                r = Route(**d)
+                r.save()
+            # Existing expense being updated in each task run.
+            else:
+                id = existing_route.id
+                r = Route.query.get(id)
+                setattrs(r, **d)
+                r.update_and_save(Route, id=r.id)
+        # from Route.get_ammended_routes().
+        else:
+            id = d['id']
+            r = Route.query.get(id)
+            setattrs(r, **d)
+            r.update_and_save(Route, id=r.id, expense_id=r.expense_id)
 
     # Convert distances to carbon and save records to db.
     for d in carbon_dict:

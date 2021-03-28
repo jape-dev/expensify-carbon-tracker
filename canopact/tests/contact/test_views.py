@@ -13,7 +13,7 @@ class TestContact(object):
         """ Contact form should redirect with a message. """
         form = {
           'email': 'foo@bar.com',
-          'message': 'Test message from Snake Eyes.'
+          'message': 'Test message from Canopact.'
         }
 
         response = client.post(url_for('contact.index'), data=form,

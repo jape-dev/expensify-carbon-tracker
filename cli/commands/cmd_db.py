@@ -66,7 +66,7 @@ def seed():
     Company(**company_params).save()
 
     user_params = {
-        'role': 'admin',
+        'role': 'company_admin',
         'email': app.config['SEED_ADMIN_EMAIL'],
         'password': app.config['SEED_ADMIN_PASSWORD'],
         'company_id': app.config['SEED_COMPANY_ID'],
@@ -74,7 +74,38 @@ def seed():
         'expensify_secret': app.config['SEED_EXPENSIFY_TOKEN']
     }
 
-    return User(**user_params).save()
+    u = User(**user_params)
+    u.email_confirmed = app.config['SEED_EMAIL_CONFIRMED']
+
+    return u.save()
+
+
+@click.command()
+@click.argument('table', default='None')
+def drop(table):
+    """Drop database tables.
+
+    Args:
+        tables: name of table to drop. If None, drop all tables.
+
+    """
+    if table != 'None':
+
+        db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+        engine = db.create_engine(db_uri)
+
+        m = db.MetaData()
+        m.reflect(bind=engine)
+
+        table_name = m.tables[table]
+        m.drop_all(engine, tables=[table_name])
+        print(f'Successfully dropped {table}')
+    else:
+        print(f'Dropping tables: {db.engine.table_names()}')
+        db.drop_all()
+        print(f'Successfully dropped all tables.')
+
+    return None
 
 
 @click.command()
@@ -96,4 +127,5 @@ def reset(ctx, with_testdb):
 
 cli.add_command(init)
 cli.add_command(seed)
+cli.add_command(drop)
 cli.add_command(reset)

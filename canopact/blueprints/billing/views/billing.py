@@ -14,7 +14,7 @@ from flask_babel import gettext as _
 from config import settings
 from lib.util_json import render_json
 from canopact.blueprints.billing.forms import SubscriptionForm, \
-    UpdateSubscriptionForm, CancelSubscriptionForm, PaymentForm
+    UpdateSubscriptionForm, CancelSubscriptionForm
 from canopact.blueprints.billing.models.coupon import Coupon
 from canopact.blueprints.billing.models.subscription import Subscription
 from canopact.blueprints.billing.models.invoice import Invoice
@@ -86,7 +86,7 @@ def create():
 
         if created:
             subscription.add(company, qty=quantity)
-            flash(_('Awesome, thanks for subscribing!'), 'success')
+            flash(_('Thank you for subscribing.'), 'success')
         else:
             flash(_('You must enable JavaScript for this request.'), 'warning')
 
@@ -219,38 +219,3 @@ def billing_details(page):
     return render_template('billing/billing_details.html',
                            paginated_invoices=paginated_invoices,
                            upcoming=upcoming, coupon=coupon)
-
-
-@billing.route('/purchase_coins', methods=['GET', 'POST'])
-@login_required
-def purchase_coins():
-    stripe_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
-    form = PaymentForm(stripe_key=stripe_key)
-
-    if form.validate_on_submit():
-        coin_bundles = current_app.config.get('COIN_BUNDLES')
-        coin_bundles_form = int(request.form.get('coin_bundles'))
-
-        bundle = next((item for item in coin_bundles if
-                       item['coins'] == coin_bundles_form), None)
-
-        if bundle is not None:
-            invoice = Invoice()
-            created = invoice.create(user=current_user,
-                                     currency=current_app.config.get(
-                                      'STRIPE_CURRENCY'),
-                                     amount=bundle.get('price_in_cents'),
-                                     coins=coin_bundles_form,
-                                     coupon=request.form.get('coupon_code'),
-                                     token=request.form.get('stripe_token'))
-
-            if created:
-                flash(_('%(amount)s coins have been added to your account.',
-                        amount=coin_bundles_form), 'success')
-            else:
-                flash(_('You must enable JavaScript for this request.'),
-                      'warning')
-
-            return redirect(url_for('bet.place_bet'))
-
-    return render_template('billing/purchase_coins.html', form=form)

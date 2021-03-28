@@ -17,7 +17,7 @@ def deliver_contact_email(email, message):
     """
     ctx = {'email': email, 'message': message}
 
-    send_template_message(subject='[Snake Eyes] Contact',
+    send_template_message(subject='[Canopact] Contact',
                           sender=email,
                           recipients=[celery.conf.get('MAIL_USERNAME')],
                           reply_to=email,

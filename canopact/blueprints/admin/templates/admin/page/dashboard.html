@@ -77,31 +77,5 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          Payouts
-          <span class="pull-right text-muted">
-            {{ group_and_count_payouts.total }}
-          </span>
-        </div>
-        <div class="panel-body">
-          {% for item in group_and_count_payouts.query %}
-            {% set percent = ((item[0] / group_and_count_payouts.total) * 100) | round %}
-            <h5>
-              {{ item[1] | title }}x
-              <span class="text-muted">({{ item[0] }})</span>
-            </h5>
-            <div class="progress">
-              <div class="progress-bar" role="progressbar"
-                   aria-valuenow="{{ percent }}" aria-valuemin="0"
-                   aria-valuemax="100" style="width: {{ percent }}%;">
-                {{ percent }}%
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
   </div>
 {% endblock %}

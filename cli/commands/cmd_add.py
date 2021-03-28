@@ -9,8 +9,6 @@ from canopact.app import create_app
 from canopact.extensions import db
 from canopact.blueprints.user.models import User
 from canopact.blueprints.billing.models.invoice import Invoice
-from canopact.blueprints.bet.models.bet import Bet
-from canopact.blueprints.bet.models.dice import roll
 
 # Create an app context for the database connection.
 app = create_app()
@@ -102,16 +100,6 @@ def users():
 
         email = random_emails.pop()
 
-        random_percent = random.random()
-
-        if random_percent >= 0.5:
-            random_trail = str(int(round((random.random() * 1000))))
-            username = fake.first_name() + random_trail
-            last_bet_on = created_on
-        else:
-            username = None
-            last_bet_on = None
-
         fake_datetime = fake.date_time_between(
             start_date='-1y', end_date='now').strftime('%s')
 
@@ -123,11 +111,8 @@ def users():
             'updated_on': created_on,
             'role': role,
             'email': email,
-            'username': username,
             'password': User.encrypt_password('password'),
             'sign_in_count': random.random() * 100,
-            'coins': 100,
-            'last_bet_on': last_bet_on,
             'current_sign_in_on': current_sign_in_on,
             'current_sign_in_ip': fake.ipv4(),
             'last_sign_in_on': current_sign_in_on,
@@ -176,7 +161,7 @@ def invoices():
             exp_date = datetime.utcfromtimestamp(
                 float(exp_date)).strftime('%Y-%m-%d')
 
-            plans = ['BRONZE', 'GOLD', 'PLATINUM']
+            plans = ['GROW']
             cards = ['Visa', 'Mastercard', 'AMEX',
                      'J.C.B', "Diner's Club"]
 
@@ -203,58 +188,6 @@ def invoices():
 
 
 @click.command()
-def bets():
-    """
-    Generate random bets.
-    """
-    data = []
-
-    users = db.session.query(User).all()
-
-    for user in users:
-        for i in range(0, random.randint(10, 20)):
-            fake_datetime = fake.date_time_between(
-                start_date='-1y', end_date='now').strftime('%s')
-
-            created_on = datetime.utcfromtimestamp(
-                float(fake_datetime)).strftime('%Y-%m-%dT%H:%M:%S Z')
-
-            wagered = random.randint(1, 100)
-            die_1 = roll()
-            die_2 = roll()
-            outcome = die_1 + die_2
-
-            random_percent = random.random()
-
-            if random_percent >= 0.75:
-                guess = outcome
-            else:
-                guess = random.randint(2, 12)
-
-            payout = float(app.config['DICE_ROLL_PAYOUT'][str(guess)])
-            is_winner = Bet.is_winner(guess, outcome)
-            payout = Bet.determine_payout(payout, is_winner)
-            net = Bet.calculate_net(wagered, payout, is_winner)
-
-            params = {
-                'created_on': created_on,
-                'updated_on': created_on,
-                'user_id': user.id,
-                'guess': guess,
-                'die_1': die_1,
-                'die_2': die_1,
-                'roll': outcome,
-                'wagered': wagered,
-                'payout': payout,
-                'net': net
-            }
-
-            data.append(params)
-
-    return _bulk_insert(Bet, data, 'bets')
-
-
-@click.command()
 @click.pass_context
 def all(ctx):
     """
@@ -265,12 +198,10 @@ def all(ctx):
     """
     ctx.invoke(users)
     ctx.invoke(invoices)
-    ctx.invoke(bets)
 
     return None
 
 
 cli.add_command(users)
 cli.add_command(invoices)
-cli.add_command(bets)
 cli.add_command(all)

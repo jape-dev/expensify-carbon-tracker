@@ -85,7 +85,6 @@ def db(app):
         'role': 'admin',
         'email': 'admin@local.host',
         'password': 'password',
-        'coins': 100,
         'company_id': 1
     }
 
@@ -620,7 +619,7 @@ def subscriptions(db):
     # Create a subscription.
     params = {
         'user_id': subscriber.id,
-        'plan': 'gold'
+        'plan': 'grow'
     }
     subscription = Subscription(**params)
     db.session.add(subscription)
@@ -700,18 +699,18 @@ def mock_stripe():
                     'quantity': 1,
                     'plan': {
                         'interval': 'month',
-                        'name': 'Gold',
+                        'name': 'Grow',
                         'created': 1424879591,
                         'amount': 500,
                         'currency': 'usd',
-                        'id': 'gold',
+                        'id': 'grow',
                         'object': 'plan',
                         'livemode': False,
                         'interval_count': 1,
                         'trial_period_days': 14,
                         'metadata': {
                         },
-                        'statement_descriptor': 'GOLD MONTHLY'
+                        'statement_descriptor': 'GROW MONTHLY'
                     },
                     'description': None,
                     'discountable': True,

@@ -74,10 +74,6 @@ CELERYBEAT_SCHEDULE = {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
         'schedule': 10
     },
-    'fetch-activities': {
-        'task': 'canopact.blueprints.carbon.tasks.fetch_activities',
-        'schedule': 10
-    },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',
         'schedule': crontab(hour=0, minute=1)
@@ -106,6 +102,7 @@ SEED_EXPENSIFY_TOKEN = 'fake_token'
 SEED_ADMIN_EMAIL = 'dev@local.host'
 SEED_ADMIN_PASSWORD = 'devpassword'
 SEED_COMPANY_ID = '999999999'
+SEED_EMAIL_CONFIRMED = True
 REMEMBER_COOKIE_DURATION = timedelta(days=90)
 
 # Google Distance Matrix API.
@@ -219,40 +216,17 @@ STRIPE_API_VERSION = '2016-03-07'
 STRIPE_CURRENCY = 'gbp'
 STRIPE_PLANS = {
     '0': {
-        'id': 'gold',
-        'name': 'Gold',
-        'amount': 10,
+        'id': 'grow',
+        'name': 'Grow',
+        'amount': 800,
         'currency': STRIPE_CURRENCY,
         'interval': 'month',
         'interval_count': 1,
-        'statement_descriptor': 'canopact GOLD',
+        'statement_descriptor': 'canopact GROW',
         'metadata': {
-            'coins': 600,
-            'recommended': True
+            'recommended': False
         }
     }
-}
-
-COIN_BUNDLES = [
-    {'coins': 100, 'price_in_cents': 100, 'label': '100 for $1'},
-    {'coins': 1000, 'price_in_cents': 900, 'label': '1,000 for $9'},
-    {'coins': 5000, 'price_in_cents': 4000, 'label': '5,000 for $40'},
-    {'coins': 10000, 'price_in_cents': 7000, 'label': '10,000 for $70'},
-]
-
-# Bet.
-DICE_ROLL_PAYOUT = {
-    '2': 36.0,
-    '3': 18.0,
-    '4': 12.0,
-    '5': 9.0,
-    '6': 7.2,
-    '7': 6.0,
-    '8': 7.2,
-    '9': 9.0,
-    '10': 12.0,
-    '11': 18.0,
-    '12': 36.0
 }
 
 RATELIMIT_STORAGE_URL = CELERY_BROKER_URL

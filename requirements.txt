@@ -19,9 +19,11 @@ alembic==0.8.6
 SQLAlchemy==1.2.0
 redis==3.3.7
 amqp==2.6.0
-celery==4.3.0
+celery[sqs]==4.3.0
 celery-redbeat==1.0.0
 pandas==1.0.5
+sshtunnel==0.4.0
+paramiko==2.7.2
 
 # Forms.
 Flask-WTF==0.9.5

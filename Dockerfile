@@ -3,6 +3,8 @@ FROM python:3.7.5-slim-buster
 RUN apt-get update && apt-get install -qq -y \
   build-essential libpq-dev --no-install-recommends
 
+RUN apt-get install libcurl4-openssl-dev libssl-dev -y
+
 ENV INSTALL_PATH /canopact
 RUN mkdir -p $INSTALL_PATH
 
@@ -15,3 +17,5 @@ COPY . .
 RUN pip install --editable .
 
 CMD gunicorn -c "python:config.gunicorn" "canopact.app:create_app()"
+# CMD celery worker -l info -A canopact.blueprints.contact.tasks 
+# CMD celery beat -l info -A canopact.blueprints.contact.tasks

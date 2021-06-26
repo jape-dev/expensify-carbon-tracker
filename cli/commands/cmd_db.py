@@ -1,6 +1,10 @@
+import base64
 import click
-
+import io
+from pathlib import Path
+import paramiko
 from sqlalchemy_utils import database_exists, create_database
+from sshtunnel import SSHTunnelForwarder
 
 from canopact.app import create_app
 from canopact.extensions import db
@@ -36,6 +40,7 @@ def init(with_testdb):
     from canopact.blueprints.carbon.models.activity import Activity
     from canopact.blueprints.carbon.models.route import Route
     from canopact.blueprints.company.models import Company
+
     db.drop_all()
     db.create_all()
     print(db.engine.table_names())
@@ -45,6 +50,58 @@ def init(with_testdb):
 
         if not database_exists(db_uri):
             create_database(db_uri)
+
+    return None
+
+
+@click.command()
+def remote_init():
+    """
+    Initialize the databas remotely using SSH tunnelling.
+
+    :param with_testdb: Create a test database
+    :return: None
+
+    """
+    from canopact.blueprints.carbon.models.activity import Activity
+    from canopact.blueprints.carbon.models.route import Route
+    from canopact.blueprints.company.models import Company
+
+    hostname = app.config['SSH_HOSTNAME']
+    ssh_username = app.config['SSH_USERNAME']
+    instance_key_path = app.config['INSTANCE_KEY_PATH']
+    remote_address = app.config['REMOTE_ADDRESS']
+    remote_port = app.config['REMOTE_PORT']
+    db_pass = app.config['DB_PASS']
+    db_user = app.config['DB_USER']
+
+    # Decode key back into a useable form from base64.
+    with open(Path(instance_key_path), 'rb') as f:
+        blob = base64.b64encode(f.read())
+
+    instance_key = blob.decode('utf-8')
+
+    key_decoded = base64.b64decode(instance_key)
+    ssh_key = key_decoded.decode('utf-8')
+
+    # Pass key to parmiko to get your pkey
+    pkey = paramiko.RSAKey.from_private_key(io.StringIO(ssh_key))
+
+    with SSHTunnelForwarder(
+        hostname,
+        ssh_username=ssh_username,
+        ssh_pkey=pkey,
+        remote_bind_address=(remote_address, remote_port)
+            ) as tunnel:
+
+        tunnel.start()
+
+        db_uri = (f'postgres+pg8000://{db_user}:{db_pass}'
+                  f'@localhost:{tunnel.local_bind_port}/canopactdb-1')
+
+        app.config['SQLALCHEMY_DATABASE_URI'] = str(db_uri)
+        db.create_all()
+        print(db.engine.table_names())
 
     return None
 
@@ -103,7 +160,7 @@ def drop(table):
     else:
         print(f'Dropping tables: {db.engine.table_names()}')
         db.drop_all()
-        print(f'Successfully dropped all tables.')
+        print('Successfully dropped all tables.')
 
     return None
 
@@ -126,6 +183,7 @@ def reset(ctx, with_testdb):
 
 
 cli.add_command(init)
+cli.add_command(remote_init)
 cli.add_command(seed)
 cli.add_command(drop)
 cli.add_command(reset)

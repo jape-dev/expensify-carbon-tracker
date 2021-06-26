@@ -424,7 +424,7 @@ class Carbon(ResourceMixin, db.Model):
         from canopact.blueprints.carbon.models.carbon import Carbon
 
         start = Carbon.get_prev_months_date(prev_months, **kwargs)
-        end = Carbon.get_prev_months_date(prev_months=0, **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
 
         # Group the journeys by the months
         sums = func.sum(Carbon.co2e)
@@ -434,7 +434,7 @@ class Carbon(ResourceMixin, db.Model):
         carbon = db.session.query(months, sums) \
             .join(Carbon, Expense.expense_id == Carbon.expense_id) \
             .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date < end) \
+            .filter(Expense.expense_created_date <= end) \
             .filter(Expense.user_id == user.id) \
             .group_by(months).all()
 
@@ -477,7 +477,7 @@ class Carbon(ResourceMixin, db.Model):
         from canopact.blueprints.carbon.models.route import Route
 
         start = Carbon.get_prev_months_date(prev_months, **kwargs)
-        end = Carbon.get_prev_months_date(prev_months=0, **kwargs)
+        end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
 
         # Group the journeys by the months
         counts = func.count(Route.id)
@@ -487,7 +487,7 @@ class Carbon(ResourceMixin, db.Model):
         routes = db.session.query(months, counts) \
             .join(Route, Expense.expense_id == Route.expense_id) \
             .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date < end) \
+            .filter(Expense.expense_created_date <= end) \
             .filter(Route.invalid == 0) \
             .filter(Expense.user_id == user.id) \
             .group_by(months).all()

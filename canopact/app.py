@@ -117,7 +117,7 @@ def extensions(app):
     csrf.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
-    limiter.init_app(app)
+    # limiter.init_app(app)
     babel.init_app(app)
     cache.init_app(app)
 

@@ -35,8 +35,8 @@ def setattrs(_self, **kwargs):
         setattr(_self, k, v)
 
 
-@celery.task(bind=True)
-def fetch_reports(self):
+@celery.task()
+def fetch_reports():
     """Fetch expense reports from Expensify Integration Server.
 
     Data on expenses is also parsed from these reports.
@@ -75,8 +75,8 @@ def fetch_reports(self):
     print('Fetch reports complete.')
 
 
-@celery.task(bind=True)
-def fetch_activities(self):
+@celery.task()
+def fetch_activities():
     """Gets activities from the Salesforce API
 
     """
@@ -96,8 +96,8 @@ def fetch_activities(self):
     print('fetch_activities complete')
 
 
-@celery.task(bind=True)
-def calculate_carbon(self):
+@celery.task()
+def calculate_carbon():
     """Calculates carbon for new travel expense reports.
 
     Saves records to `routes` and `carbon` tables.

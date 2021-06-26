@@ -8,6 +8,7 @@ from faker import Faker
 from canopact.app import create_app
 from canopact.extensions import db
 from canopact.blueprints.user.models import User
+from canopact.blueprints.carbon.models.expense import Expense
 from canopact.blueprints.billing.models.invoice import Invoice
 
 # Create an app context for the database connection.
@@ -188,6 +189,74 @@ def invoices():
 
 
 @click.command()
+def expenses():
+    """Generate random expenses and save to database.
+
+    """
+    data = []
+
+    users = db.session.query(User).all()
+
+    for user in users:
+        for i in range(0, 300):
+            # Create a fake unix timestamp in the future.
+            created_on = fake.date_time_between(
+                start_date='-1y', end_date='-18d')
+
+            created_on_datetime = created_on.strftime('%Y-%m-%dT%H:%M:%S Z')
+            created_on_date = created_on.strftime('%Y-%m-%d')
+
+            merchants = ['National Train Company', 'Car Hire', 'Taxi Company',
+                         'Bus Company']
+            categories = ["Car, Van and Travel Expenses: Train",
+                          "Car, Van and Travel Expenses: Fuel",
+                          "Car, Van and Travel Expenses: Taxi",
+                          "Car, Van and Travel Expenses: Bus",
+                          "Car, Van and Travel Expenses: Car Hire"]
+            comments = ['London, UK; Newcastle, UK;',
+                        'Southampton, UK; Cambridge, UK;',
+                        'Sunderland, UK; Newcastle, UK;',
+                        'Cambridge, UK; Oxford, UK;',
+                        'London, UK; Reading, UK;',
+                        'Reading, UK; London, UK;',
+                        'Warwick, UK; Durham, UK;',
+                        'Oxford, UK; London, UK;',
+                        'Birmingham, UK; London, UK;',
+                        'Banbury, UK; Southampton, UK;',
+                        'Durham, UK; Sunderland, UK;',
+                        'Coventry, UK; Banbury, UK;',
+                        'Newport, UK; Oxford, UK;']
+
+            params = {
+                'created_on': created_on_datetime,
+                'updated_on': created_on_datetime,
+                'expense_id': int(random.random()*1000000000),
+                'user_id': 1,
+                'report_id': 72282405,
+                'expense_type': 'expense',
+                'expense_category': random.choice(categories),
+                'expense_amount': 52,
+                'expense_currency': 'GBP',
+                'expense_comment': random.choice(comments),
+                'expense_converted_amount': None,
+                'expense_created_date': created_on_date,
+                'expense_inserted_date': created_on_date,
+                'expense_merchant': random.choice(merchants),
+                'expense_modified_amount': None,
+                'expense_modified_created_date': None,
+                'expense_modified_merchant': None,
+                'expense_unit_count': None,
+                'expense_unit_rate': None,
+                'expense_unit_unit': None,
+                'travel_expense': 1,
+            }
+
+            data.append(params)
+
+    return _bulk_insert(Expense, data, 'expenses')
+
+
+@click.command()
 @click.pass_context
 def all(ctx):
     """
@@ -204,4 +273,5 @@ def all(ctx):
 
 cli.add_command(users)
 cli.add_command(invoices)
+cli.add_command(expenses)
 cli.add_command(all)

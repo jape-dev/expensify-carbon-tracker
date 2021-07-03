@@ -2,7 +2,8 @@ from flask_wtf import Form
 from wtforms import (
   StringField,
   FormField,
-  FieldList
+  FieldList,
+  BooleanField
 )
 from wtforms.validators import (
   Length,
@@ -18,6 +19,7 @@ class SearchForm(Form):
 class RouteForm(Form):
     origin = StringField([Optional(),  Length(1, 256)])
     destination = StringField([Optional(),  Length(1, 256)])
+    return_type = BooleanField('Return Trip')
 
 
 class JourneysForm(Form):

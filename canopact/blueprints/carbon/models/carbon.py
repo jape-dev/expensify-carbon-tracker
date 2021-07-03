@@ -551,7 +551,7 @@ class Carbon(ResourceMixin, db.Model):
         routes = Carbon.month_num_to_string(routes, order=labels)
 
         # Extract values and map to a dictionary.
-        values = [v[1] for v in routes]
+        values = [v[1] if v[1] is not None else 0 for v in routes]
 
         data = {
             'labels': labels,

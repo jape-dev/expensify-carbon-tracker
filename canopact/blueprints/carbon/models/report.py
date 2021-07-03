@@ -55,8 +55,11 @@ class Report(ResourceMixin, db.Model):
             partnerUserID = user.expensify_id
             partnerUserSecret = user.expensify_secret
 
-            # Get all reports from Expensify Integration Server.
-            report_list = expensify.main(partnerUserID, partnerUserSecret)
+            if partnerUserID is not None or partnerUserSecret is not None:
+                # Get all reports from Expensify Integration Server.
+                report_list = expensify.main(partnerUserID, partnerUserSecret)
+            else:
+                break
 
             # Append id as key and report list as value in dict.
             user_reports[uid] = report_list

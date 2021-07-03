@@ -481,7 +481,6 @@ class Distance():
 
         return df
 
-
     @staticmethod
     def calculate_distance(df, category_col="route_category"):
         """Wrapper function to calculate distance for routes.

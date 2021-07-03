@@ -206,10 +206,16 @@ def routes_edit():
             else:
                 destination = entry.data['destination']
 
+            if entry.data['return_type']:
+                return_type = 'return'
+            else:
+                return_type = None
+
             # Update and save the Route model.
             if all(v is not None for v in [origin, destination]):
                 r.origin = origin
                 r.destination = destination
+                r.return_type = return_type
                 r.invalid = 0  # Change the invalid flag.
                 r.update_and_save(Route, id=id)
 
@@ -220,6 +226,7 @@ def routes_edit():
             route_form = RouteForm()
             route_form.origin = None
             route_form.destination = None
+            route_form.return_type = None
             journeys_form.ids.append(route.id)
             journeys_form.journeys.append_entry(route_form)
 

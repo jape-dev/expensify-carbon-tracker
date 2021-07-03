@@ -123,8 +123,9 @@ def calculate_carbon():
     distances = distances.where(pd.notnull(distances), None)
 
     # Reduce route cols down to cols of interest and convert to a dictionary.
-    route_df = distances[['id', 'expense_id', 'expense_category', 'route_category',
-                          'origin', 'destination', 'invalid', 'distance']]
+    route_df = distances[['id', 'expense_id', 'expense_category',
+                          'route_category', 'origin', 'destination',
+                          'return_type', 'invalid', 'distance']]
 
     route_dict = route_df.to_dict('records')
 

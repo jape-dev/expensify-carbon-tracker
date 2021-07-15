@@ -97,14 +97,28 @@
             <td>{{ route.expense_comment }}</td>
             <td>{{ route.expense_category }}</td>
             <td>
-              {% call f.form_group(journey.origin,
-                css_class='hide-label') %}
-              {% endcall %}
+              {% if route.expense_category == 'Car, Van and Travel Expenses: Air' %}
+                {% call f.form_group(journey.origin, id='air-origin',
+                  placeholder='Airport name or code',
+                  css_class='hide-label') %}
+                {% endcall %}
+              {% else %}
+                {% call f.form_group(journey.origin,
+                  css_class='hide-label') %}
+                {% endcall %}
+              {% endif %}
             </td>
             <td>
-              {% call f.form_group(journey.destination,
-                css_class='hide-label') %}
-              {% endcall %}
+              {% if route.expense_category == 'Car, Van and Travel Expenses: Air' %}
+                {% call f.form_group(journey.destination, id='air-destination',
+                  placeholder='Airport name or code',
+                  css_class='hide-label') %}
+                {% endcall %}
+              {% else %}
+                {% call f.form_group(journey.destination,
+                  css_class='hide-label') %}
+                {% endcall %}
+              {% endif %}
             </td>
             <td>
               {% call f.form_group(journey.return_type,

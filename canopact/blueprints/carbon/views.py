@@ -219,9 +219,21 @@ def routes_edit():
                 r.invalid = 0  # Change the invalid flag.
                 r.update_and_save(Route, id=id)
 
+        # Clear journeys form.
+        while len(journeys_form.journeys.entries) > 0:
+            journeys_form.journeys.pop_entry()
+        while len(journeys_form.ids) > 0:
+            journeys_form.ids.pop()
+
         flash('Routes has been saved successfully.', 'success')
         return redirect(url_for('carbon.cleaner'))
     else:
+        # Clear journeys form.
+        while len(journeys_form.journeys.entries) > 0:
+            journeys_form.journeys.pop_entry()
+        while len(journeys_form.ids) > 0:
+            journeys_form.ids.pop()
+
         for route in routes:
             route_form = RouteForm()
             route_form.origin = None

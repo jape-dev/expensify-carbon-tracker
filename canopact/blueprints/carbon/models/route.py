@@ -343,6 +343,7 @@ class Distance():
             return distance
 
         df['distance'] = df.apply(lambda row: parse_json(row), axis=1)
+        df['distance'] = df['distance'].replace(0, np.NaN)
 
         return df
 
@@ -403,7 +404,7 @@ class Distance():
             if json is None:
                 return None
 
-            if len(json['distances']) > 0:
+            if json['distance'] > 0:
                 distance = json['distance']
             else:
                 print(f"Distance24 API request failed with status: "
@@ -469,7 +470,10 @@ class Distance():
             if type is not None or type != np.NaN:
                 type = str(type)
                 if 'r' in type or 'R' in type:
-                    distance = row[distance_col] * 2
+                    try:
+                        distance = row[distance_col] * 2
+                    except TypeError:
+                        distance = row[distance_col]
                 else:
                     distance = row[distance_col]
             else:
@@ -532,8 +536,7 @@ class Distance():
         distances = Distance.return_distance(distances)
 
         # Add the invalid marker for any routes that don't have a distance.
-        distances['invalid'] = [1 if d is None else 0 for d in
-                                distances['distance']]
+        distances.loc[distances['distance'].isnull(), 'invalid'] = 1
 
         # Remove any rows that contain a null id.
         distances = distances[distances[category_col].notna()]

@@ -152,7 +152,7 @@ def calculate_carbon():
                 id = existing_route.id
                 r = Route.query.get(id)
                 setattrs(r, **d)
-                r.update_and_save(Route, id=r.id)
+                r.update_and_save(Route, id=r.id, expense_id=r.expense_id)
         # from Route.get_ammended_routes().
         else:
             id = d['id']

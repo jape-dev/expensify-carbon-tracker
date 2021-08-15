@@ -2,17 +2,25 @@
 
 {% block title %}Canopact{% endblock %}
 
+<head>
+  <meta charset="utf-8">
+  <title>Canopact Landing Page</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="Webflow" name="generator">
+  <link href="/static/styles/webflow.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript">WebFont.load({  google: {    families: ["Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic","Roboto:300,regular,500","Roboto Condensed:300,regular,700","Roboto Slab:300,regular,700","Arbutus Slab:regular"]  }});</script>
+</head>
+
 {% block body %}
-  <div class="text-center lg-margin-bottom">
-    <h1>Canopact</h1>
-    <h3 class="text-muted">
-      Grassroots Corporate Sustainability.
-    </h3>
+<div class="w-container">
+  <div class="columns w-row">
+    <div class="w-col w-col-6">
+      <h1 class="w-main-heading">Employee Driven Sustainability.<br>Powered by <strong>Canopact</strong>.</h1>
+      <p class="w-main-subtitle">Canopact provides analytics and engagement tools for companies and employees to reduce their carbon footprint. <br></p>
+      <a href="{{ url_for('user.signup') }}" class="w-button">Sign Up</a>
+    </div>
+    <div class="w-col w-col-6"><img src="/static/images/dashboard.png" loading="lazy" sizes="(max-width: 479px) 96vw, (max-width: 767px) 97vw, (max-width: 991px) 46vw, 460px" srcset="/static/images/dashboard.png 500w, /static/images/dashboard.png 655w" alt=""></div>
   </div>
-  <div class="text-center lg-margin-bottom">
-    <h2>Get Started</h2>
-    <p>
-      <a href="{{ url_for('user.signup') }}" class="btn btn-default">Sign up</a>
-    </p>
-  </div>
+</div>
+
 {% endblock %}

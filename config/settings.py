@@ -209,6 +209,9 @@ DEFRA_EMISSION_FACTORS = {
     }
 }
 
+# Manual Uploads
+UPLOAD_PATH = '/canopact/upload/upload.csv'
+
 # Billing.
 STRIPE_SECRET_KEY = None
 STRIPE_PUBLISHABLE_KEY = None

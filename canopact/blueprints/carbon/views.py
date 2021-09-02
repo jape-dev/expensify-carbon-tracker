@@ -54,7 +54,7 @@ def get_date_input():
 
 
 @carbon.route('/carbon/dashboard/<agg>', methods=['GET', 'POST'])
-@expensify_required()
+# @expensify_required()
 @email_confirm_required()
 @login_required
 def dashboard(agg):
@@ -159,7 +159,7 @@ def get_routes():
 
 
 @carbon.route('/carbon/cleaner')
-@expensify_required()
+# @expensify_required()
 @email_confirm_required()
 @login_required
 def cleaner():
@@ -173,7 +173,7 @@ def cleaner():
 
 
 @carbon.route('/carbon/cleaner/edit', methods=['GET', 'POST'])
-@expensify_required()
+# @expensify_required()
 @email_confirm_required()
 @login_required
 def routes_edit():

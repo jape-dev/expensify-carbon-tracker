@@ -2,7 +2,7 @@ from datetime import timedelta
 from celery.schedules import crontab
 
 
-DEBUG = True
+DEBUG = False
 LOG_LEVEL = 'DEBUG'  # CRITICAL / ERROR / WARNING / INFO / DEBUG
 
 SERVER_NAME = 'localhost:8000'
@@ -68,11 +68,11 @@ CELERY_REDIS_MAX_CONNECTIONS = 5
 CELERYBEAT_SCHEDULE = {
     'fetch-expensify-reports': {
         'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
-        'schedule': 10
+        'schedule': 90
     },
     'calculate-carbon': {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
-        'schedule': 10
+        'schedule': 30
     },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',
@@ -208,6 +208,9 @@ DEFRA_EMISSION_FACTORS = {
         'taxi': EF_N2O_TAXI
     }
 }
+
+# Manual Uploads
+UPLOAD_PATH = '/canopact/upload/upload.csv'
 
 # Billing.
 STRIPE_SECRET_KEY = None

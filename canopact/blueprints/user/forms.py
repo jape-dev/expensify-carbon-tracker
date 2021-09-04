@@ -1,6 +1,6 @@
 from flask_wtf import Form
 from wtforms import HiddenField, StringField, PasswordField, SelectField
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional, EqualTo, Regexp
 from wtforms_components import EmailField, Email, Unique
 
 from config.settings import LANGUAGES, INDUSTRIES, EMPLOYEES
@@ -28,7 +28,14 @@ class BeginPasswordResetForm(Form):
 
 class PasswordResetForm(Form):
     reset_token = HiddenField()
-    password = PasswordField('Password', [DataRequired(), Length(8, 128)])
+    password = PasswordField('Password', [DataRequired(), Length(8, 128),
+                             Regexp('\d.*[A-Z]|[A-Z].*\d',
+                             message=('Passwords must contain an uppercase '
+                                      'character and at least one numeric '
+                                      'character')),
+                             EqualTo('confirm',
+                             message='Passwords must match')])
+    confirm = PasswordField('Repeat Password', [DataRequired()])
 
 
 class SignupForm(ModelForm):
@@ -56,7 +63,14 @@ class SignupForm(ModelForm):
                               ],
                           default='GB')
     job_title = StringField('Job Title')
-    password = PasswordField('Password', [DataRequired(), Length(8, 128)])
+    password = PasswordField('Password', [DataRequired(), Length(8, 128),
+                             Regexp('\d.*[A-Z]|[A-Z].*\d',
+                             message=('Passwords must contain an uppercase '
+                                      'character and at least one numeric '
+                                      'character')),
+                             EqualTo('confirm',
+                             message='Passwords must match')])
+    confirm = PasswordField('Repeat Password', [DataRequired()])
     invited = False
 
 
@@ -80,7 +94,15 @@ class UpdateCredentialsForm(ModelForm):
             get_session=lambda: db.session
         )
     ])
-    password = PasswordField('Password', [Optional(), Length(8, 128)])
+    password = PasswordField('Password (Optional)', [Optional(),
+                             Length(8, 128),
+                             Regexp('\d.*[A-Z]|[A-Z].*\d',
+                             message=('Passwords must contain an uppercase '
+                                      'character and at least one numeric '
+                                      'character')),
+                             EqualTo('confirm',
+                             message='Passwords must match')])
+    confirm = PasswordField('Repeat Password', [Optional()])
 
 
 class ExpensifyAPICredentialsForm(ModelForm):

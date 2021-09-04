@@ -382,7 +382,7 @@ class Carbon(ResourceMixin, db.Model):
             query = db.session.query(journeys) \
                 .join(Expense, Route.expense_id == Expense.expense_id) \
                 .filter(Expense.user_id.in_(users)) \
-                .filter(Route.invalid == 0) \
+                .filter(Route.invalid is not None) \
                 .filter(Expense.expense_created_date >= start) \
                 .filter(Expense.expense_created_date <= end) \
                 .all()
@@ -390,7 +390,7 @@ class Carbon(ResourceMixin, db.Model):
             query = db.session.query(journeys) \
                 .join(Expense, Route.expense_id == Expense.expense_id) \
                 .filter(Expense.user_id == user.id) \
-                .filter(Route.invalid == 0) \
+                .filter(Route.invalid is not None) \
                 .filter(Expense.expense_created_date >= start) \
                 .filter(Expense.expense_created_date <= end) \
                 .all()
@@ -488,7 +488,7 @@ class Carbon(ResourceMixin, db.Model):
             .join(Route, Expense.expense_id == Route.expense_id) \
             .filter(Expense.expense_created_date >= start) \
             .filter(Expense.expense_created_date <= end) \
-            .filter(Route.invalid == 0) \
+            .filter(Route.invalid is not None) \
             .filter(Expense.user_id == user.id) \
             .group_by(months).all()
 
@@ -540,7 +540,7 @@ class Carbon(ResourceMixin, db.Model):
         routes = db.session.query(months, counts) \
             .join(Route, Expense.expense_id == Route.expense_id) \
             .filter(Expense.expense_created_date >= start) \
-            .filter(Route.invalid == 0) \
+            .filter(Route.invalid is not None) \
             .filter(Expense.user_id == user.id) \
             .group_by(months).all()
 
@@ -551,7 +551,7 @@ class Carbon(ResourceMixin, db.Model):
         routes = Carbon.month_num_to_string(routes, order=labels)
 
         # Extract values and map to a dictionary.
-        values = [v[1] for v in routes]
+        values = [v[1] if v[1] is not None else 0 for v in routes]
 
         data = {
             'labels': labels,
@@ -591,7 +591,7 @@ class Carbon(ResourceMixin, db.Model):
         # Query database.
         transports = db.session.query(Route.expense_category, counts) \
             .join(Expense, Route.expense_id == Expense.expense_id) \
-            .filter(Route.invalid == 0) \
+            .filter(Route.invalid is not None) \
             .filter(Expense.user_id == user.id) \
             .filter(Expense.expense_created_date >= start) \
             .filter(Expense.expense_created_date <= end) \
@@ -647,7 +647,7 @@ class Carbon(ResourceMixin, db.Model):
         # Query database.
         routes = db.session.query(Route.origin, Route.destination, counts) \
             .join(Expense, Route.expense_id == Expense.expense_id) \
-            .filter(Route.invalid == 0) \
+            .filter(Route.invalid is not None) \
             .filter(Route.route_category != 'unit') \
             .filter(Expense.user_id == user.id) \
             .filter(Expense.expense_created_date >= start) \

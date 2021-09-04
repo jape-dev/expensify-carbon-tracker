@@ -31,6 +31,7 @@ class Route(ResourceMixin, db.Model):
     route_category = db.Column(db.String(100))
     origin = db.Column(db.String(100))
     destination = db.Column(db.String(100))
+    return_type = db.Column(db.String(10))
     invalid = db.Column(db.Integer())
     distance = db.Column(db.Float())
 
@@ -63,8 +64,9 @@ class Route(ResourceMixin, db.Model):
         route = description.split(';')
         org = route[0]
         dst = route[1]
+        type = route[2]
 
-        return org, dst
+        return org, dst, type
 
     @staticmethod
     def check_route_exists(orig, dest):
@@ -137,7 +139,7 @@ class Route(ResourceMixin, db.Model):
 
         df = pd.DataFrame(columns=['id', 'expense_id', 'expense_category'
                                    'route_category', 'origin', 'destination',
-                                   'exists'])
+                                   'return_type', 'exists'])
 
         for route in routes:
             row = {
@@ -147,6 +149,7 @@ class Route(ResourceMixin, db.Model):
                 'route_category': route.route_category,
                 'origin': route.origin,
                 'destination': route.destination,
+                'return_type': route.return_type,
                 'exists': False
             }
 
@@ -178,17 +181,22 @@ class Route(ResourceMixin, db.Model):
         def apply_route_methods(row):
             """Helper function to apply methods from Routes to the `new` DataFrame.
 
+            Returns
+                row (pd.DataFrame): row containing updated route fields.
             """
             row['id'] = None
+
             if row[type_col] != 'expense':
                 row['route_category'] = 'unit'
             else:
                 try:
-                    org, dst = Route.split_orig_dest(row[comment_col])
+                    org, dst, type = Route.split_orig_dest(row[comment_col])
                 except(ValueError, TypeError):
-                    org, dst = None, None
+                    org, dst, type = None, None, None
+
                 row['origin'] = org
                 row['destination'] = dst
+                row['return_type'] = type
                 exists = Route.check_route_exists(org, dst)
                 row['exists'] = exists
                 row['route_category'] = Route.get_route_type(row[category_col])
@@ -335,6 +343,7 @@ class Distance():
             return distance
 
         df['distance'] = df.apply(lambda row: parse_json(row), axis=1)
+        df['distance'] = df['distance'].replace(0, np.NaN)
 
         return df
 
@@ -395,7 +404,7 @@ class Distance():
             if json is None:
                 return None
 
-            if len(json['distances']) > 0:
+            if json['distance'] > 0:
                 distance = json['distance']
             else:
                 print(f"Distance24 API request failed with status: "
@@ -433,6 +442,46 @@ class Distance():
             return distance
 
         df['distance'] = df.apply(lambda row: convert_distance(row), axis=1)
+
+        return df
+
+    @staticmethod
+    def return_distance(df, type_col='return_type',
+                        distance_col='distance'):
+        """Helper function to double distance for return trips.
+
+        Args:
+            df (pandas.DataFrame): row containing routes.
+
+        Returns:
+            df (pandas.DataFrame): row with updated distance if route
+                is a rturn trip.
+
+        """
+
+        def double(row):
+            """Helper function to double distance if route is a  return trip.
+
+            First checks is return_type col is null.
+
+            """
+            type = row[type_col]
+
+            if type is not None or type != np.NaN:
+                type = str(type)
+                if 'r' in type or 'R' in type:
+                    try:
+                        distance = row[distance_col] * 2
+                    except TypeError:
+                        distance = row[distance_col]
+                else:
+                    distance = row[distance_col]
+            else:
+                distance = row[distance_col]
+
+            return distance
+
+        df[distance_col] = df.apply(lambda row: double(row), axis=1)
 
         return df
 
@@ -483,9 +532,11 @@ class Distance():
 
         distances = unit_distance.append([ground_distance, air_distance])
 
+        # Double the distances for return trips.
+        distances = Distance.return_distance(distances)
+
         # Add the invalid marker for any routes that don't have a distance.
-        distances['invalid'] = [1 if d is None else 0 for d in
-                                distances['distance']]
+        distances.loc[distances['distance'].isnull(), 'invalid'] = 1
 
         # Remove any rows that contain a null id.
         distances = distances[distances[category_col].notna()]

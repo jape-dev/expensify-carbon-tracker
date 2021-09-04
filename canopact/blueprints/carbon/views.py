@@ -16,6 +16,9 @@ from canopact.blueprints.carbon.forms import (
     JourneysForm,
     DateForm
 )
+from canopact.blueprints.billing.decorators import (
+    subscription_required
+)
 from canopact.blueprints.user.decorators import (
     email_confirm_required,
     expensify_required
@@ -54,7 +57,8 @@ def get_date_input():
 
 
 @carbon.route('/carbon/dashboard/<agg>', methods=['GET', 'POST'])
-@expensify_required()
+# @expensify_required()
+@subscription_required
 @email_confirm_required()
 @login_required
 def dashboard(agg):
@@ -159,7 +163,8 @@ def get_routes():
 
 
 @carbon.route('/carbon/cleaner')
-@expensify_required()
+# @expensify_required()
+@subscription_required
 @email_confirm_required()
 @login_required
 def cleaner():
@@ -173,7 +178,7 @@ def cleaner():
 
 
 @carbon.route('/carbon/cleaner/edit', methods=['GET', 'POST'])
-@expensify_required()
+# @expensify_required()
 @email_confirm_required()
 @login_required
 def routes_edit():
@@ -206,20 +211,39 @@ def routes_edit():
             else:
                 destination = entry.data['destination']
 
+            if entry.data['return_type']:
+                return_type = 'return'
+            else:
+                return_type = None
+
             # Update and save the Route model.
             if all(v is not None for v in [origin, destination]):
                 r.origin = origin
                 r.destination = destination
+                r.return_type = return_type
                 r.invalid = 0  # Change the invalid flag.
                 r.update_and_save(Route, id=id)
+
+        # Clear journeys form.
+        while len(journeys_form.journeys.entries) > 0:
+            journeys_form.journeys.pop_entry()
+        while len(journeys_form.ids) > 0:
+            journeys_form.ids.pop()
 
         flash('Routes has been saved successfully.', 'success')
         return redirect(url_for('carbon.cleaner'))
     else:
+        # Clear journeys form.
+        while len(journeys_form.journeys.entries) > 0:
+            journeys_form.journeys.pop_entry()
+        while len(journeys_form.ids) > 0:
+            journeys_form.ids.pop()
+
         for route in routes:
             route_form = RouteForm()
             route_form.origin = None
             route_form.destination = None
+            route_form.return_type = None
             journeys_form.ids.append(route.id)
             journeys_form.journeys.append_entry(route_form)
 

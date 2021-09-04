@@ -16,6 +16,7 @@ def subscription_required(f):
         from canopact.blueprints.company.models import Company
         company = Company.query.get(current_user.company_id)
         if not company.trial_active:
+            flash('Your trial has now finished. Please contact info@canopact.com for next steps.', 'error')
             return redirect(url_for('billing.pricing'))
 
         return f(*args, **kwargs)

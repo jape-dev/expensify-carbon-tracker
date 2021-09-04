@@ -12,7 +12,7 @@ from canopact.extensions import db
 from canopact.blueprints.user.models import User
 from flask import url_for
 from lib.util_sqlalchemy import ResourceMixin, AwareDateTime
-from lib.util_datetime import timedelta_months, datediff_days
+from lib.util_datetime import timedelta_months, datediff_days, tzware_datetime
 
 
 class Company(ResourceMixin, db.Model):
@@ -89,12 +89,17 @@ class Company(ResourceMixin, db.Model):
             int: number of days remaining on the trial.
 
         """
+        now = tzware_datetime()
+
         if not start:
             start = self.created_on
         if not end:
             end = self.free_trial_expires_on
 
-        days = datediff_days(start, end)
+        if end < now:
+            days = 0
+        else:
+            days = datediff_days(start, end)
 
         return days
 

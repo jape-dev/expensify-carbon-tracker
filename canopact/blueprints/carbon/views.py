@@ -16,6 +16,9 @@ from canopact.blueprints.carbon.forms import (
     JourneysForm,
     DateForm
 )
+from canopact.blueprints.billing.decorators import (
+    subscription_required
+)
 from canopact.blueprints.user.decorators import (
     email_confirm_required,
     expensify_required
@@ -55,6 +58,7 @@ def get_date_input():
 
 @carbon.route('/carbon/dashboard/<agg>', methods=['GET', 'POST'])
 # @expensify_required()
+@subscription_required
 @email_confirm_required()
 @login_required
 def dashboard(agg):
@@ -160,6 +164,7 @@ def get_routes():
 
 @carbon.route('/carbon/cleaner')
 # @expensify_required()
+@subscription_required
 @email_confirm_required()
 @login_required
 def cleaner():

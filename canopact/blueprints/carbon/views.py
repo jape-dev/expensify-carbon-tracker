@@ -152,6 +152,7 @@ def get_routes():
                               Expense.expense_created_date) \
         .join(Expense, Route.expense_id == Expense.expense_id) \
         .join(Report, Expense.report_id == Report.report_id) \
+        .filter(Expense.user_id == current_user.id) \
         .filter(Route.route_category != 'unit') \
         .filter((Route.origin.is_(None) | Route.destination.is_(None)) |
                 (Route.invalid == 1)) \

@@ -38,6 +38,7 @@ from sqlalchemy import text
 
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
+
 # Dashboard -------------------------------------------------------------------
 @cache.cached(timeout=300, key_prefix="date_input")
 def get_date_input():

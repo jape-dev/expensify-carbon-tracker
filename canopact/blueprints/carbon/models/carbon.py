@@ -422,6 +422,7 @@ class Carbon(ResourceMixin, db.Model):
         # Prevent circular imports.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.carbon import Carbon
+        from canopact.blueprints.user.models import User
 
         start = Carbon.get_prev_months_date(prev_months, **kwargs)
         end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
@@ -431,12 +432,25 @@ class Carbon(ResourceMixin, db.Model):
         months = func.extract("month", Expense.expense_created_date)
 
         # Query database.
-        carbon = db.session.query(months, sums) \
-            .join(Carbon, Expense.expense_id == Carbon.expense_id) \
-            .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date <= end) \
-            .filter(Expense.user_id == user.id) \
-            .group_by(months).all()
+        if agg == 'company':
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            carbon = db.session.query(months, sums) \
+                .join(Carbon, Expense.expense_id == Carbon.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .filter(Expense.user_id.in_(users)) \
+                .group_by(months).all()
+        elif agg == 'employee':
+            carbon = db.session.query(months, sums) \
+                .join(Carbon, Expense.expense_id == Carbon.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .filter(Expense.user_id == user.id) \
+                .group_by(months).all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
 
         # Get monthly labels.
         labels = Carbon.get_month_labels(prev_months, **kwargs)
@@ -475,6 +489,7 @@ class Carbon(ResourceMixin, db.Model):
         # Prevent circular imports.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.user.models import User
 
         start = Carbon.get_prev_months_date(prev_months, **kwargs)
         end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
@@ -484,13 +499,27 @@ class Carbon(ResourceMixin, db.Model):
         months = func.extract("month", Expense.expense_created_date)
 
         # Query database.
-        routes = db.session.query(months, counts) \
-            .join(Route, Expense.expense_id == Route.expense_id) \
-            .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date <= end) \
-            .filter(Route.invalid is not None) \
-            .filter(Expense.user_id == user.id) \
-            .group_by(months).all()
+        if agg == 'company':
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            routes = db.session.query(months, counts) \
+                .join(Route, Expense.expense_id == Route.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id.in_(users)) \
+                .group_by(months).all()
+        elif agg == 'employee':
+            routes = db.session.query(months, counts) \
+                .join(Route, Expense.expense_id == Route.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id == user.id) \
+                .group_by(months).all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
 
         # Get monthly labels.
         labels = Carbon.get_month_labels(prev_months, **kwargs)
@@ -529,6 +558,7 @@ class Carbon(ResourceMixin, db.Model):
         # Prevent circular imports.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.user.models import User
 
         start = Carbon.get_prev_months_date(prev_months, **kwargs)
 
@@ -537,12 +567,25 @@ class Carbon(ResourceMixin, db.Model):
         months = func.extract("month", Expense.expense_created_date)
 
         # Query database.
-        routes = db.session.query(months, counts) \
-            .join(Route, Expense.expense_id == Route.expense_id) \
-            .filter(Expense.expense_created_date >= start) \
-            .filter(Route.invalid is not None) \
-            .filter(Expense.user_id == user.id) \
-            .group_by(months).all()
+        if agg == 'company':
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            routes = db.session.query(months, counts) \
+                .join(Route, Expense.expense_id == Route.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id.in_(users)) \
+                .group_by(months).all()
+        elif agg == 'employee':
+            routes = db.session.query(months, counts) \
+                .join(Route, Expense.expense_id == Route.expense_id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id == user.id) \
+                .group_by(months).all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
 
         # Get monthly labels.
         labels = Carbon.get_month_labels(prev_months)
@@ -581,6 +624,7 @@ class Carbon(ResourceMixin, db.Model):
         # Prevent circular imports.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.user.models import User
 
         counts = func.count(Route.id)
 
@@ -589,15 +633,32 @@ class Carbon(ResourceMixin, db.Model):
         end = Carbon.get_prev_months_date(prev_months=0, first=False, **kwargs)
 
         # Query database.
-        transports = db.session.query(Route.expense_category, counts) \
-            .join(Expense, Route.expense_id == Expense.expense_id) \
-            .filter(Route.invalid is not None) \
-            .filter(Expense.user_id == user.id) \
-            .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date <= end) \
-            .group_by(Route.expense_category) \
-            .order_by(counts.desc()) \
-            .all()
+        # Query database.
+        if agg == 'company':
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            transports = db.session.query(Route.expense_category, counts) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .group_by(Route.expense_category) \
+                .order_by(counts.desc()) \
+                .all()
+        elif agg == 'employee':
+            transports = db.session.query(Route.expense_category, counts) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Route.invalid is not None) \
+                .filter(Expense.user_id == user.id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .group_by(Route.expense_category) \
+                .order_by(counts.desc()) \
+                .all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
 
         # Add percentages to the list.
         transports = Carbon.calculate_group_percentages(transports)
@@ -637,6 +698,7 @@ class Carbon(ResourceMixin, db.Model):
         # Prevent circular import.
         from canopact.blueprints.carbon.models.expense import Expense
         from canopact.blueprints.carbon.models.route import Route
+        from canopact.blueprints.user.models import User
 
         start = Carbon.get_prev_months_date(prev_months=0, first=True,
                                             **kwargs)
@@ -645,16 +707,33 @@ class Carbon(ResourceMixin, db.Model):
         counts = func.count(Route.id)
 
         # Query database.
-        routes = db.session.query(Route.origin, Route.destination, counts) \
-            .join(Expense, Route.expense_id == Expense.expense_id) \
-            .filter(Route.invalid is not None) \
-            .filter(Route.route_category != 'unit') \
-            .filter(Expense.user_id == user.id) \
-            .filter(Expense.expense_created_date >= start) \
-            .filter(Expense.expense_created_date <= end) \
-            .group_by(Route.origin, Route.destination) \
-            .order_by(counts.desc()) \
-            .all()
+        if agg == 'company':
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            routes = db.session.query(Route.origin, Route.destination, counts) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Route.invalid is not None) \
+                .filter(Route.route_category != 'unit') \
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .group_by(Route.origin, Route.destination) \
+                .order_by(counts.desc()) \
+                .all()
+        elif agg == 'employee':
+            routes = db.session.query(Route.origin, Route.destination, counts) \
+                .join(Expense, Route.expense_id == Expense.expense_id) \
+                .filter(Route.invalid is not None) \
+                .filter(Route.route_category != 'unit') \
+                .filter(Expense.user_id == user.id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .group_by(Route.origin, Route.destination) \
+                .order_by(counts.desc()) \
+                .all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
 
         # Add percentages to the list.
         routes = Carbon.calculate_group_percentages(routes, value_index=2)

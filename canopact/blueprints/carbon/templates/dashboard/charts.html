@@ -76,32 +76,6 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">CO2e per km</h5>
-                      <span class="h2 text-black font-weight-bold mb-0">{{ emissions_per_distance['co2e'] }} kg</span>
-                    </div>
-                    <div class="col-auto">
-                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
-                        <i class="ni ni-delivery-fast"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="mt-3 mb-0 text-lg">
-                  {% if per_distance_change['co2e'] <= 0 %}
-                    <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ per_distance_change['co2e'] }}%</span>       
-                  {% else %}
-                    <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ per_distance_change['co2e'] }}%</span> 
-                  {% endif %}
-                    <span class="text-nowrap text-black-50">Compared to previous month</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6">
-              <div class="card card-stats">
-                <!-- Card body -->
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col">
                       <h5 class="card-title text-uppercase text-muted mb-0">CO2e per journey</h5>
                       <span class="h2 text-black font-weight-bold mb-0">{{ emissions_per_journeys['co2e'] }} kg</span>
                     </div>
@@ -128,8 +102,8 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">CANOPY COVER</h5>
-                      <span class="h2 text-black-50 font-weight-bold mb-0">Coming soon</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Total Cost</h5>
+                      <span class="h2 text-black font-weight-bold mb-0">£ {{ cost }}</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
@@ -138,8 +112,39 @@
                     </div>
                   </div>
                   <p class="mt-3 mb-0 text-lg">
-                    <span class="text-nowrap text-white">Compared to previous month</span>
+                  {% if cost_change <= 0 %}
+                    <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ cost_change }}%</span>       
+                  {% else %}
+                    <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ cost_change }}%</span> 
+                  {% endif %}
+                    <span class="text-nowrap text-black-50">Compared to previous month</span>
                   </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Cost per Journey</h5>
+                      <span class="h2 text-black font-weight-bold mb-0">£ {{ cost_per_journey }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-delivery-fast"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="mt-3 mb-0 text-lg">
+                    {% if cost_per_journey_change <= 0 %}
+                      <span class="text-success mr-2"><i class="fa fa-arrow-down"></i> {{ cost_per_journey_change }}%</span>       
+                    {% else %}
+                      <span class="text-danger mr-2"><i class="fa fa-arrow-up"></i> {{ cost_per_journey_change }}%</span> 
+                    {% endif %}
+                      <span class="text-nowrap text-black-50">Compared to previous month</span>
+                    </p>
                 </div>
               </div>
             </div>

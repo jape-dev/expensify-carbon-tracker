@@ -64,7 +64,7 @@ class Carbon(ResourceMixin, db.Model):
                 factor = f[mode]
             except KeyError:
                 if mode == 'air':
-                    err = f'Use convert_to_emissions_air() for air modes.'
+                    err = 'Use convert_to_emissions_air() for air modes.'
                 elif mode == 'bus':
                     err = 'Use convert_to_emissions_bus() for bus modes.'
                 else:
@@ -711,7 +711,8 @@ class Carbon(ResourceMixin, db.Model):
             users = db.session.query(User.id) \
                 .filter(User.company_id == user.company_id).all()
 
-            routes = db.session.query(Route.origin, Route.destination, counts) \
+            routes = \
+                db.session.query(Route.origin, Route.destination, counts) \
                 .join(Expense, Route.expense_id == Expense.expense_id) \
                 .filter(Route.invalid is not None) \
                 .filter(Route.route_category != 'unit') \
@@ -722,7 +723,8 @@ class Carbon(ResourceMixin, db.Model):
                 .order_by(counts.desc()) \
                 .all()
         elif agg == 'employee':
-            routes = db.session.query(Route.origin, Route.destination, counts) \
+            routes = \
+                db.session.query(Route.origin, Route.destination, counts) \
                 .join(Expense, Route.expense_id == Expense.expense_id) \
                 .filter(Route.invalid is not None) \
                 .filter(Route.route_category != 'unit') \
@@ -758,6 +760,64 @@ class Carbon(ResourceMixin, db.Model):
         }
 
         return data
+
+    @staticmethod
+    def group_and_sum_cost(user, agg='employee', prev_month=False,
+                                     **kwargs):
+        """Group and sum expense amount by the agg level.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+            prev_month (bool): if true, apply month offset of one month.
+
+        Returns:
+            results (float): cost aggregated for the month.
+
+        """
+        # Prevent circular import.
+        from canopact.blueprints.carbon.models.expense import Expense
+        from canopact.blueprints.user.models import User
+
+        amount = func.sum(Expense.expense_amount)
+
+        if prev_month:
+            start = Carbon.get_prev_months_date(prev_months=1, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=1, first=False,
+                                              **kwargs)
+        else:
+            start = Carbon.get_prev_months_date(prev_months=0, first=True,
+                                                **kwargs)
+            end = Carbon.get_prev_months_date(prev_months=0, first=False,
+                                              **kwargs)
+
+        if agg == 'company':
+
+            users = db.session.query(User.id) \
+                .filter(User.company_id == user.company_id).all()
+
+            query = db.session.query(amount) \
+                .join(Carbon, Carbon.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id.in_(users)) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        elif agg == 'employee':
+            query = db.session.query(amount) \
+                .join(Carbon, Carbon.expense_id == Expense.expense_id) \
+                .filter(Expense.user_id == user.id) \
+                .filter(Expense.expense_created_date >= start) \
+                .filter(Expense.expense_created_date <= end) \
+                .all()
+        else:
+            raise ValueError("agg must be 'user' or 'company'")
+
+        values = query[0]
+        result = Carbon.round_to_n(values[0], 2)
+
+        return result
 
     @staticmethod
     def emissions_per_distance(user, agg='employee', prev_month=False,
@@ -815,6 +875,36 @@ class Carbon(ResourceMixin, db.Model):
                    else 0 for k, v in emissions.items()}
 
         return results
+
+    @staticmethod
+    def cost_per_journeys(user, agg='employee', prev_month=False,
+                          **kwargs):
+        """
+        Gets the cost in £ divided by the number of journeys.
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns:
+            result (float): cost divided by the number of journeys.
+
+        """
+        cost = Carbon.group_and_sum_cost(user, agg,
+                                         prev_month=prev_month,
+                                         **kwargs)
+        journeys = Carbon.group_and_count_journeys(user, agg,
+                                                   prev_month=prev_month,
+                                                   **kwargs)
+        journeys = journeys['journeys']
+
+        if journeys != 0:
+            result = Carbon.round_to_n(cost / journeys, 2)
+        else:
+            result = 0
+
+        return result
 
     @staticmethod
     def emissions_metrics(user, agg="employee", prev_month=False, **kwargs):
@@ -968,6 +1058,64 @@ class Carbon(ResourceMixin, db.Model):
         return current, previous, change
 
     @staticmethod
+    def cost_metrics(user, agg="employee", **kwargs):
+        """Wrapper function to produce cost metrics:
+            * current month's total cost
+            * previous month's total cost
+            * percentage change between current and previous month.
+
+        Calls:
+            * Carbon.group_and_sum_cost()
+            * Carbon.percentage_diff()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns
+            tuple: costs for current month, previous month and percentage
+                difference.
+
+        """
+        current = Carbon.group_and_sum_cost(user, agg=agg, **kwargs)
+        previous = Carbon.group_and_sum_cost(user, agg=agg,
+                                             prev_month=True, **kwargs)
+        change = Carbon.percentage_diff(current, previous)
+        print(change)
+
+        return current, previous, change
+
+    @staticmethod
+    def cost_per_journey_metrics(user, agg="employee", **kwargs):
+        """Wrapper function to produce cost per journey metrics:
+            * current month's emissions per distance.
+            * previous month's emissions per distance.
+            * percentage change between current and previous month.
+
+        Calls:
+            * Carbon.cost_per_journeys()
+            * Carbon.percentage_diff()
+
+        Args:
+            user: (models.User): user to aggregate on.
+            agg (str): 'employee' to aggregate by employee, 'company' to
+                aggregate by company.
+
+        Returns
+            tuple: cost per journey for current month, previous month
+                and percentage difference.
+
+        """
+        current = Carbon.cost_per_journeys(user, agg=agg, **kwargs)
+        previous = Carbon.cost_per_journeys(user, agg=agg,
+                                            prev_month=True, **kwargs)
+        # change = Carbon.emissions_percentage_diff(current, previous)
+        change = Carbon.percentage_diff(current, previous)
+
+        return current, previous, change
+
+    @staticmethod
     def emissions_percentage_diff(base, compare):
         """Calculate the percentage difference between twos sets of emmissions
 
@@ -983,18 +1131,51 @@ class Carbon(ResourceMixin, db.Model):
             """Selector function to handle cases where base values are zero.
 
             """
-            if base[k] == 0:
-                if compare.get(k) == 0:
+            if compare.get(k) == 0:
+                if base[k] == 0:
                     return 0
                 else:
-                    return - 100
+                    return 100
             else:
                 return Carbon.round_to_n(100 * ((base[k] - compare.get(k))
-                                         / base[k]), 2)
+                                         / compare.get(k)), 2)
 
         results = {k: handle_zeros(k) for k in base}
 
         return results
+
+    @staticmethod
+    def percentage_diff(base, compare):
+        """Calculate the percentage difference between two numbers.
+
+        Handles zeros to prevent divide by zero error.
+
+        base (float): value to to calculate percentage change to.
+        compare (float): value to to calculate percentage from.
+
+        Returns:
+            result (float): percentage difference value.
+
+        """
+
+        def handle_zeros():
+            """Selector function to handle cases where base values are zero.
+
+            Base = New
+            Compare = Old
+
+            """
+            if compare == 0:
+                if base == 0:
+                    return 0
+                else:
+                    return 100
+            else:
+                return Carbon.round_to_n(100 * ((base - compare) / compare), 2)
+
+        result = handle_zeros()
+
+        return result
 
     @staticmethod
     def get_month_labels(n, reverse=True, date=None):

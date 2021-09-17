@@ -86,8 +86,10 @@ def dashboard(agg):
         Carbon.emissions_metrics(current_user, agg=agg, date=date)
     per_journeys, prev_per_journeys, per_journeys_change = \
         Carbon.per_journeys_metrics(current_user, agg=agg, date=date)
-    per_distance, prev_per_distance, per_distance_change = \
-        Carbon.per_distance_metrics(current_user, agg=agg, date=date)
+    cost, prev_cost, cost_change = \
+        Carbon.cost_metrics(current_user, agg=agg, date=date)
+    cost_per_journey, prev_cost_per_journey, cost_per_journey_change = \
+        Carbon.cost_per_journey_metrics(current_user, agg=agg, date=date)
 
     # Charts.
     journeys = Carbon.group_and_count_journeys_monthly(current_user, agg=agg,
@@ -116,8 +118,10 @@ def dashboard(agg):
                            emissions_change=emissions_change,
                            emissions_per_journeys=per_journeys,
                            per_journeys_change=per_journeys_change,
-                           emissions_per_distance=per_distance,
-                           per_distance_change=per_distance_change,
+                           cost=cost,
+                           cost_change=cost_change,
+                           cost_per_journey=cost_per_journey,
+                           cost_per_journey_change=cost_per_journey_change,
                            journeys=json.dumps(journeys),
                            monthly_carbon=json.dumps(monthly_carbon),
                            emissions_line=json.dumps(emissions_line),

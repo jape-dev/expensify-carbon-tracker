@@ -38,6 +38,7 @@ from sqlalchemy import text
 
 carbon = Blueprint('carbon', __name__, template_folder='templates')
 
+
 # Dashboard -------------------------------------------------------------------
 @cache.cached(timeout=300, key_prefix="date_input")
 def get_date_input():
@@ -85,8 +86,10 @@ def dashboard(agg):
         Carbon.emissions_metrics(current_user, agg=agg, date=date)
     per_journeys, prev_per_journeys, per_journeys_change = \
         Carbon.per_journeys_metrics(current_user, agg=agg, date=date)
-    per_distance, prev_per_distance, per_distance_change = \
-        Carbon.per_distance_metrics(current_user, agg=agg, date=date)
+    cost, prev_cost, cost_change = \
+        Carbon.cost_metrics(current_user, agg=agg, date=date)
+    cost_per_journey, prev_cost_per_journey, cost_per_journey_change = \
+        Carbon.cost_per_journey_metrics(current_user, agg=agg, date=date)
 
     # Charts.
     journeys = Carbon.group_and_count_journeys_monthly(current_user, agg=agg,
@@ -115,8 +118,10 @@ def dashboard(agg):
                            emissions_change=emissions_change,
                            emissions_per_journeys=per_journeys,
                            per_journeys_change=per_journeys_change,
-                           emissions_per_distance=per_distance,
-                           per_distance_change=per_distance_change,
+                           cost=cost,
+                           cost_change=cost_change,
+                           cost_per_journey=cost_per_journey,
+                           cost_per_journey_change=cost_per_journey_change,
                            journeys=json.dumps(journeys),
                            monthly_carbon=json.dumps(monthly_carbon),
                            emissions_line=json.dumps(emissions_line),
@@ -152,6 +157,7 @@ def get_routes():
                               Expense.expense_created_date) \
         .join(Expense, Route.expense_id == Expense.expense_id) \
         .join(Report, Expense.report_id == Report.report_id) \
+        .filter(Expense.user_id == current_user.id) \
         .filter(Route.route_category != 'unit') \
         .filter((Route.origin.is_(None) | Route.destination.is_(None)) |
                 (Route.invalid == 1)) \

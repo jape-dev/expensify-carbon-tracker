@@ -66,10 +66,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_REDIS_MAX_CONNECTIONS = 5
 CELERYBEAT_SCHEDULE = {
-    'fetch-expensify-reports': {
-        'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
-        'schedule': 90
-    },
+    # 'fetch-expensify-reports': {
+    #     'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
+    #     'schedule': 90
+    # },
     'calculate-carbon': {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
         'schedule': 30
@@ -86,7 +86,7 @@ SQLALCHEMY_DATABASE_URI = db_uri
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Caching.
-CACHE_TYPE = 'simple'
+CACHE_TYPE = 'SimpleCache'
 CACHE_DEFAULT_TIMEOUT = 300
 
 # Salesforce.

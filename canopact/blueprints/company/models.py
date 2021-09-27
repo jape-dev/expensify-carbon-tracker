@@ -10,7 +10,7 @@ import pytz
 
 from canopact.extensions import db
 from canopact.blueprints.user.models import User
-from flask import url_for
+from flask import current_app, url_for
 from lib.util_sqlalchemy import ResourceMixin, AwareDateTime
 from lib.util_datetime import timedelta_months, datediff_days, tzware_datetime
 
@@ -66,11 +66,16 @@ class Company(ResourceMixin, db.Model):
         u = User.find_by_identity(from_email)
         auth_token = u.get_auth_token()
 
+        server_name = current_app.config['TEMP_SERVER_NAME']
+        current_app.config['SERVER_NAME'] = server_name
+
         invite_url = url_for(
             'company.invite_signup',
             token=auth_token,
             email=to_email,
             _external=True)
+
+        current_app.config['SERVER_NAME'] = None
 
         # This prevents circular imports.
         from canopact.blueprints.company.tasks import (

@@ -5,7 +5,8 @@ from celery.schedules import crontab
 DEBUG = False
 LOG_LEVEL = 'DEBUG'  # CRITICAL / ERROR / WARNING / INFO / DEBUG
 
-SERVER_NAME = 'localhost:8000'
+TEMP_SERVER_NAME = 'canopact.com'
+# SERVER_NAME = 'localhost:8000'
 SECRET_KEY = 'insecurekeyfordev'
 
 # Flask-Mail.
@@ -87,6 +88,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Caching.
 CACHE_TYPE = 'SimpleCache'
+# CACHE_DIR = '/tmp'
 CACHE_DEFAULT_TIMEOUT = 300
 
 # Salesforce.

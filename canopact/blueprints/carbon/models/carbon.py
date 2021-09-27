@@ -1082,7 +1082,6 @@ class Carbon(ResourceMixin, db.Model):
         previous = Carbon.group_and_sum_cost(user, agg=agg,
                                              prev_month=True, **kwargs)
         change = Carbon.percentage_diff(current, previous)
-        print(change)
 
         return current, previous, change
 

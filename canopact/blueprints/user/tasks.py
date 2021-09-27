@@ -6,22 +6,24 @@ celery = create_celery_app()
 
 
 @celery.task()
-def deliver_password_reset_email(user_id, reset_token):
+def deliver_password_reset_email(user_id, reset_url):
     """
     Send a reset password e-mail to a user.
 
-    :param user_id: The user id
-    :type user_id: int
-    :param reset_token: The reset token
-    :type reset_token: str
-    :return: None if a user was not found
+    Args:
+        user_id (int): id of user.
+        reset_url (str): link for user to reset password.
+
+    Returns:
+        None if user not found.
+
     """
     user = User.query.get(user_id)
 
     if user is None:
         return
 
-    ctx = {'user': user, 'reset_token': reset_token}
+    ctx = {'user': user, 'reset_url': reset_url}
 
     send_template_message(subject='Password reset from Canopact',
                           recipients=[user.email],

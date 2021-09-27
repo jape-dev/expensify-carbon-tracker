@@ -155,10 +155,20 @@ class User(UserMixin, ResourceMixin, db.Model):
         u = User.find_by_identity(identity)
         reset_token = u.serialize_token()
 
+        server_name = current_app.config['TEMP_SERVER_NAME']
+        current_app.config['SERVER_NAME'] = server_name
+
+        reset_url = url_for(
+            'user.password_reset',
+            token=reset_token,
+            _external=True)
+
+        current_app.config['SERVER_NAME'] = None
+
         # This prevents circular imports.
         from canopact.blueprints.user.tasks import (
             deliver_password_reset_email)
-        deliver_password_reset_email.delay(u.id, reset_token)
+        deliver_password_reset_email.delay(u.id, reset_url)
 
         return u
 
@@ -175,10 +185,15 @@ class User(UserMixin, ResourceMixin, db.Model):
         u = User.find_by_identity(identity)
         auth_token = u.get_auth_token()
 
+        server_name = current_app.config['TEMP_SERVER_NAME']
+        current_app.config['SERVER_NAME'] = server_name
+
         confirm_url = url_for(
             'user.confirm_email',
             token=auth_token,
             _external=True)
+
+        current_app.config['SERVER_NAME'] = None
 
         # This prevents circular imports.
         from canopact.blueprints.user.tasks import (

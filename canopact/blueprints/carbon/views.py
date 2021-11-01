@@ -52,7 +52,7 @@ def get_date_input():
 
     """
     date = request.form.get('date')
-    date = datetime.datetime.strptime(date, "%Y-%m-%d")
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 
     return date
 
@@ -80,6 +80,9 @@ def dashboard(agg):
             date = get_date_input()
         except BaseException:
             date = datetime.date.today()
+
+    # Update data in form.
+    form.date.data = date
 
     # KPI cards.
     emissions, prev_emissions, emissions_change = \

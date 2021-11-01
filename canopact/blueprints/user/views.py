@@ -92,13 +92,13 @@ def begin_password_reset():
     return render_template('user/begin_password_reset.html', form=form)
 
 
-@user.route('/account/password_reset', methods=['GET', 'POST'])
+@user.route('/account/password_reset/<token>', methods=['GET', 'POST'])
 @anonymous_required()
-def password_reset():
-    form = PasswordResetForm(reset_token=request.args.get('reset_token'))
+def password_reset(token):
+    form = PasswordResetForm(reset_token=token)
 
     if form.validate_on_submit():
-        u = User.deserialize_token(request.form.get('reset_token'))
+        u = User.deserialize_token(token)
 
         if u is None:
             flash('Your reset token has expired or was tampered with.',
@@ -113,7 +113,7 @@ def password_reset():
             flash('Your password has been reset.', 'success')
             return redirect(url_for('user.settings'))
 
-    return render_template('user/password_reset.html', form=form)
+    return render_template('user/password_reset.html', form=form, token=token)
 
 
 @user.route('/signup', methods=['GET', 'POST'])

@@ -69,6 +69,8 @@ def fetch_reports():
                 e_dict = Expense.parse_expense_from_report(r_expenses, j)
                 # Instantiate the expense using the dict.
                 e = Expense(**e_dict)
+
+                e.expense_amount = e.expense_amount / 100
                 # Save expense into db table.
                 e.update_and_save(Expense, expense_id=e.expense_id)
 

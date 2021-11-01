@@ -27,20 +27,21 @@
 .w-col-6 {
   width: 50%;
 }
+
 .w-main-heading {
   margin-top: 0px;
   margin-bottom: 20px;
   font-family: 'Open Sans', sans-serif;
   color: #165314;
-  font-size: 38px;
-  line-height: 44px;
+  font-size: 2.8vw;
+  /* line-height: 44px; */
   font-weight: 700;
 }
 .w-main-subtitle {
   margin-bottom: 26px;
   font-family: 'Open Sans', sans-serif;
-  font-size: 20px;
-  line-height: 26px;
+  font-size: 1.2vw;
+  /* line-height: 26px; */
   font-weight: 300;
 }
 .w-button {
@@ -55,10 +56,33 @@
   transition: background-color 300ms ease, box-shadow 300ms ease, color 300ms ease;
   font-family: 'Roboto Slab', sans-serif;
   color: #fff;
-  font-size: 16px;
+  font-size: 1vw;
   text-align: center;
   text-decoration: none;
 }
 .w-button:hover {
   background-color: #fff;;
 }
+
+/* Use a media query to add a breakpoint at 800px: */
+@media screen and (max-width: 800px) {
+  .w-container {
+    position: relative;
+    top: 10px;
+    bottom: 10px;
+  }
+  .w-col-6 {
+    width: 100%; /* The width is 100%, when the viewport is 800px or smaller */
+    padding-bottom: 20px;
+  }
+  .w-main-heading {
+    font-size: 5vw;
+  }
+  .w-main-subtitle {
+    font-size: 3vw;
+  }
+  .w-button {
+    font-size: 3vw;
+  }
+}
+

@@ -5,8 +5,9 @@ from celery.schedules import crontab
 DEBUG = False
 LOG_LEVEL = 'DEBUG'  # CRITICAL / ERROR / WARNING / INFO / DEBUG
 
-TEMP_SERVER_NAME = 'canopact.com'
-# SERVER_NAME = 'localhost:8000'
+
+TEMP_SERVER_NAME = 'localhost:8000'
+SERVER_NAME = 'localhost:8000'
 SECRET_KEY = 'insecurekeyfordev'
 
 # Flask-Mail.
@@ -67,13 +68,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_REDIS_MAX_CONNECTIONS = 5
 CELERYBEAT_SCHEDULE = {
-    # 'fetch-expensify-reports': {
-    #     'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
-    #     'schedule': 90
-    # },
+    'fetch-expensify-reports': {
+        'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
+        'schedule': 5
+    },
     'calculate-carbon': {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
-        'schedule': 30
+        'schedule': 5
     },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',

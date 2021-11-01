@@ -64,6 +64,9 @@
         <ul class="list-inline">
           <li class="text-muted">Canopact &copy; {{ current_year() }}</li>
           {% block footer %}{% endblock %}
+          <!-- <li><a href="{{ url_for('contact.index') }}">Contact</a></li> -->
+          <li><a href="{{ url_for('page.privacy') }}">Privacy Policy</a></li>
+          <li><a href="{{ url_for('page.terms') }}">Terms of Service</a></li>
         </ul>
       </div>
     </footer>

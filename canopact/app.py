@@ -38,7 +38,8 @@ CELERY_TASK_LIST = [
     'canopact.blueprints.user.tasks',
     'canopact.blueprints.billing.tasks',
     'canopact.blueprints.carbon.tasks',
-    'canopact.blueprints.company.tasks'
+    'canopact.blueprints.company.tasks',
+    'canopact.blueprints.page.tasks'
 ]
 
 

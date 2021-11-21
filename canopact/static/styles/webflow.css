@@ -1,48 +1,91 @@
-.w-container {
-  position: relative;
-  top: 100px;
-  bottom: 50px;
+body {
+  margin-bottom: none !important;
+  padding-bottom: 0px !important;
+  width: 100% !important; 
 }
-.w-row,
-.w-container .w-row {
-  margin-left: 0;
-  margin-right: 0;
+
+.footer {
+  position: absolute !important;
 }
-.w-row .w-row {
-  margin-left: 0;
-  margin-right: 0;
+
+.w-container-full{
+  min-height:100vh;
+  height:100%;
+  width:100%;
+  padding-left: 8rem;
+  padding-right: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.w-col {
-  position: relative;
-  float: left;
-  width: 100%;
-  min-height: 1px;
-  padding-left: 10px;
-  padding-right: 10px;
+.w-container-lg{
+  width:100%;
+  padding-top: 3rem !important;
+  display: flex;
+  flex-wrap: wrap;
 }
-.w-col .w-col {
-  padding-left: 0;
-  padding-right: 0;
+.w-container-md{
+  width:100%;
+  padding-top: 3rem !important;
+  padding-left: 8rem;
+  padding-right: 8rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }
-.w-col-6 {
-  width: 50%;
+.w-container-sm{
+  min-height:30vh;
+  width:100%;
+  padding-left: 8rem;
+  padding-right: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .w-main-heading {
-  margin-top: 0px;
+  margin-top: 5rem;
   margin-bottom: 20px;
   font-family: 'Open Sans', sans-serif;
   color: #165314;
   font-size: 2.8vw;
-  /* line-height: 44px; */
+  font-weight: 700;
+}
+.w-section-heading {
+  margin-top: 0px;
+  margin-bottom: 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 2vw;
   font-weight: 700;
 }
 .w-main-subtitle {
-  margin-bottom: 26px;
+  margin-bottom: 2rem;
   font-family: 'Open Sans', sans-serif;
   font-size: 1.2vw;
-  /* line-height: 26px; */
   font-weight: 300;
+  padding-right: 13rem;
+}
+.w-section-subtitle {
+  margin-bottom: 2rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1.2vw;
+  font-weight: 300;
+  padding-right: 13rem;
+}
+.w-section-h3 {
+  margin-bottom: 0.5rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1vw;
+  font-weight: 700;
+  padding-right: 13rem;
+}
+.w-section-p {
+  margin-bottom: 2rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1vw;
+  font-weight: 300;
+  padding-right: 13rem;
 }
 .w-button {
   display: inline-block;
@@ -64,25 +107,192 @@
   background-color: #fff;;
 }
 
+.graphic {
+  max-width:90%;
+  height:auto;
+  margin-top:10rem;
+}
+
+.cover-graphic {
+  max-width:100%;
+  height:auto;
+}
+
+
+/* Colours
+-------------------------------------------------- */
+.bg-green{
+  background-color: #446354;
+}
+.bg-white{
+  background-color: #fafafa;
+}
+.text-green{
+  color: #446354;
+}
+.text-white{
+  color: #fafafa;
+}
+.text-black{
+  color: #0a0a0a;
+}
+
+
+/* Shapes
+-------------------------------------------------- */
+
+.square {
+  margin-top: 2rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  background: #165314;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Medium Widget Overrides (Pixel Point.io)
+-------------------------------------------------- */
+
+.medium-widget-article__title {
+  display: flex;
+  margin-bottom: 0.5rem;
+  font-family: 'Open Sans', sans-serif !important;
+  font-size: 1vw !important;
+  font-weight: 700;
+}
+
+.medium-widget-article__description {
+  margin-bottom: 2rem;
+  font-family: 'Open Sans', sans-serif !important;
+  font-size: 1vw;
+  font-weight: 300;
+}
+
+.medium-widget-article__row {
+  margin-top: 3rem;
+}
+
+/* Responsive elements
+-------------------------------------------------- */
+
 /* Use a media query to add a breakpoint at 800px: */
 @media screen and (max-width: 800px) {
-  .w-container {
-    position: relative;
-    top: 10px;
-    bottom: 10px;
+  .main, html, body {
+    width: 100% !important; 
+    margin: 0px !important;
+    padding: 0px !important;
+    overflow-x:hidden !important;
   }
-  .w-col-6 {
-    width: 100%; /* The width is 100%, when the viewport is 800px or smaller */
-    padding-bottom: 20px;
+  .w-container-full{
+    height:100%;
+    width:100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    display: flex;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .container {
+    width:100% !important;
+  }
+  .w-container-lg{
+    height:90vh;
+    width:100%;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .w-container-md{
+    height:75vh;
+    width:100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .w-container-sm{
+    height:60vh;
+    width:100%;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .w-main-heading {
-    font-size: 5vw;
+    font-size: 10vw;
   }
   .w-main-subtitle {
+    font-size: 6vw;
+    padding-right: 1rem;
+  }
+  .w-section-heading {
+    margin-top: 2rem;
+    font-size: 6vw;
+  }
+  .w-section-subtitle {
+    margin-bottom: 0.2rem;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 4vw !important;
+    font-weight: 300;
+    padding-right: 1rem;
+  }
+  .w-section-h3 {
+    margin-bottom: 0.2rem;
+    font-family: 'Open Sans', sans-serif;
     font-size: 3vw;
+    font-weight: 700;
+    padding-right: 1rem;
+  }
+  .w-section-p {
+    margin-bottom: 2rem;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 3vw;
+    font-weight: 300;
+    padding-right: 1rem;
+  }
+  .medium-widget-article__row {
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    margin-top: 0rem !important;
+}
+  .medium-widget-article__title {
+    display: flex;
+    margin-bottom: 0.5rem;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: 3vw !important;
+    line-height: 2rem !important;
+    font-weight: 700;
+  }
+  .medium-widget-article__description {
+    margin-bottom: 0.1rem;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: 3vw;
+    font-weight: 300;
+  }
+  .btn {
+    margin-bottom: 3rem !important;
   }
   .w-button {
     font-size: 3vw;
   }
+  .square {
+    margin-top: 0.5rem;
+    margin-right: 0.5rem;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 20%;
+    background: #165314;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .graphic {
+    display:none;
+  }
 }
-

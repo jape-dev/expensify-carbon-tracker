@@ -1,26 +1,260 @@
 {% extends 'layouts/app.html' %}
+{% import 'macros/form.html' as f with context %}
 
-{% block title %}Canopact{% endblock %}
+
+{% block title %} Canopact {% endblock %}
 
 <head>
   <meta charset="utf-8">
-  <title>Canopact Landing Page</title>
+  <title>Canopact</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
-  <meta content="Webflow" name="generator">
-  <link href="/static/styles/webflow.css" rel="stylesheet" type="text/css">
-  <script type="text/javascript">WebFont.load({  google: {    families: ["Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic","Roboto:300,regular,500","Roboto Condensed:300,regular,700","Roboto Slab:300,regular,700","Arbutus Slab:regular"]  }});</script>
 </head>
 
 {% block body %}
-<div class="w-container">
-  <div class="columns w-row">
-    <div class="w-col w-col-6">
-      <h1 class="w-main-heading">Employee Driven Sustainability.<br>Powered by <strong>Canopact</strong>.</h1>
-      <p class="w-main-subtitle">Help your company take a sustainable approach to hybrid working and employee travel.<br></p>
-      <a href="https://opiftzv5vn5.typeform.com/to/O4Id7XPc" class="w-button">Request a Demo</a>
+
+
+<section id="cover" class="w-container-full">
+  <div class="container">
+    <div class="row no-gutters">
+      <div class="col-md-6">
+        <h1 class="w-main-heading">Make the move to a green hybrid workplace</h1>
+        <p class="w-main-subtitle">Canopact is the hybrid working platform for purpose-driven organisations.
+          Work and travel in ways that are more environmentally sustainable.<br>
+        </p>
+          <div class="row">
+            {% call f.form_tag('page.home') %}
+              <div class="col-md-5">
+                <input id="email" class="form-control " name="email" placeholder="name@email.com" required="" type="email" value="">
+              </div>
+              <div class="col-md-4">
+                <button id="register-btn" type="submit" class="btn btn-primary btn-block" onclick="showPleaseWait()">
+                  Join our waiting list
+                </button>
+              </div>
+            {% endcall %}
+          </div>
+      </div>
+      <div class="col-md-6">
+        <object  data="/static/images/cover.svg" type="image/svg+xml" loading="lazy" class="cover-graphic"></object>
+      </div>
     </div>
-    <div class="w-col w-col-6"><img src="/static/images/dashboard.png" loading="lazy" style="max-width:100%;height:auto;"></div>
+  </div>
+</section>
+
+<section id="statistic" class="w-container-sm bg-green">
+  <div class="container">
+    <div class="row">
+      <h2 class="w-section-heading text-white">
+        In 2019, transport was the largest emitting sector, responsible for 27% of all greenhouse gas emissions in the UK.
+      </h2>
+      <a href="https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/957887/2019_Final_greenhouse_gas_emissions_statistical_release.pdf"
+        target="_blank" class="w-section-p text-white text-right" style="float:right">
+        UK Department for Business, Energy & Industrial Strategy, 2021
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="booking" class="w-container-md bg-white">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="row">
+          <h2 class="w-section-heading">Create a collaborative and green hybrid workplace</h2>
+          <p class="w-section-subtitle">Canopact recommends meeting locations that minimise total emissions, time and costs from 
+            national and international travel across attendees.
+          </p>
+        </div>
+        <div class="row">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-square-pin text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Meet at the greenest spot</h3>
+            <p class="w-section-p">Save time, cost and carbon by meeting in locations that are more convenient for all attendees.</p>
+          </div>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-shop text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Be a green explorer</h3>
+            <p class="w-section-p">Discover new and sustainable meeting venues such as restaurants or cafés whilst helping the planet.</p>
+          </div>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-email-83 text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Impactful invites</h3>
+            <p class="w-section-p">Integrate with your favourite calendar app and show attendees the carbon impact of your meeting directly on the invite.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-1"></div>
+      <div class="col-md-5"><img src="/static/images/undraw_location.svg" loading="lazy" class="graphic"></div>
+    </div>
+  </div>
+</section>
+
+<section id="sustainability" class="w-container-md bg-white">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-5"><img src="/static/images/undraw_subway.svg" loading="lazy" class="graphic"></div>
+      <div class="col-md-1"></div>
+      <div class="col-md-6">
+        <div class="row">
+          <h2 class="w-section-heading">Enable employee-driven sustainability</h2>
+          <p class="w-section-subtitle">Empower each employee to drive your organisation's sustainability goals.</p>
+        </div>
+        <div class="row">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-bulb-61 text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Instant carbon footprint visibility</h3>
+            <p class="w-section-p">Canopact automatically calculates emissions whenever you agree a meeting location,
+              book an office desk or expense business travel.
+            </p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-bus-front-12 text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Actionable steps to reduce emissions</h3>
+            <p class="w-section-p">Easy-to-understand recommendations to reduce emissions further, such as car-pooling.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-world text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Continuous climate action from emissions data</h3>
+            <p class="w-section-p">Connect employees with a range of offset partners to support sustainable causes that are meaningful to them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="data" class="w-container-lg bg-white">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="row">
+          <h2 class="w-section-heading">Insights that save the planet and costs</h2>
+          <p class="w-section-subtitle">Become a data driven workspace with powerful insights on utilisation, mobility and emissions.</p>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-building text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Save costs and energy</h3>
+            <p class="w-section-p">Forecast office and desk demand to save energy costs and usage.</p>
+          </div>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-chart-bar-32 text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3"> Accurately understand your carbon footprint</h3>
+            <p class="w-section-p">
+              Rather than averages and assumptions, track emissions on an ongoing basis and export data for carbon accounting purposes with confidence.
+            </p>
+          </div>
+        </div>
+        <div class="row d-flex align-items-center">
+          <div class="col-sm-1">
+            <div class="square">
+              <i class="ni ni-map-big text-white"></i>
+            </div>
+          </div>
+          <div class="col-sm-11">
+            <h3 class="w-section-h3">Build your hybrid strategy</h3>
+            <p class="w-section-p">
+                Understand employee mobility trends to inform initiatives such as cycle-to-work schemes and flexible working policies.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-1"></div>
+      <div class="col-md-5"><img src="/static/images/undraw_data.svg" loading="lazy" class="graphic"></div>
+    </div>
+  </div>
+</section>
+
+<section id="blog" class="w-container-sm">
+  <div class="container">
+    <div class="row">
+      <div id="medium-widget"></div>
+    </div>
+  </div>
+</section>
+
+<section id="call-to-action" class="w-container-sm bg-green">
+  <div class="container">
+    <div class="row no-gutters">
+      <h2 class="w-section-heading text-white text-center">Put sustainability at the core of your hybrid working strategy</h2>
+      <div class="container">
+        <div class="row">
+          {% call f.form_tag('page.home') %}
+            <div class="col-md-2"></div>
+            <div class="col-md-4">
+              <input id="email" class="form-control " name="email" placeholder="name@email.com" required="" type="email" value="">
+            </div>
+            <div class="col-md-4">
+              <button id = 'register-btn' type="submit" class="btn btn-primary btn-block bg-white"  onclick="showPleaseWait()">
+                Join our waiting list
+              </button>
+            </div>
+            <div class="col-md-2"></div>
+          {% endcall %}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<script src="https://medium-widget.pixelpoint.io/widget.js"></script>
+<script>
+// Medium Widget Resize
+if (screen.width > 800) {
+  var display_params = {"resource":"https://medium.com/@canopact","postsPerLine":3,"limit":3,"picture":"small","fields":["description","author","publishAt"],"ratio":"square"};
+}
+else {
+  var display_params = {"resource":"https://medium.com/@canopact","postsPerLine":1,"limit":3,"picture":"none","fields":["description","author","publishAt"],"ratio":"landscape"};
+};
+
+MediumWidget.Init({renderTo: '#medium-widget', params: display_params});
+
+// Button click event listener
+function showPleaseWait() {
+  document.getElementById('register-btn').innerText = 'Please wait...';
+}
+</script>
 
 {% endblock %}

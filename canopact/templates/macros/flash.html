@@ -2,7 +2,7 @@
 {%- macro render() -%}
   {% with messages = get_flashed_messages(with_categories=True) %}
     {% if messages %}
-      <div id="flash-messages" class="row sm-margin-top">
+      <div id="flash-messages" class="row sm-margin-top" style="margin: 2rem;">
         {% for category, msg in messages %}
           <div class="alert alert-{{ category }}" role="alert">
             {{ msg }}

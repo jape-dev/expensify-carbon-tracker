@@ -70,11 +70,11 @@ CELERY_REDIS_MAX_CONNECTIONS = 5
 CELERYBEAT_SCHEDULE = {
     'fetch-expensify-reports': {
         'task': 'canopact.blueprints.carbon.tasks.fetch_reports',
-        'schedule': 5
+        'schedule': 3600
     },
     'calculate-carbon': {
         'task': 'canopact.blueprints.carbon.tasks.calculate_carbon',
-        'schedule': 5
+        'schedule': 1800
     },
     'expire-free-trials': {
         'task': 'canopact.blueprints.company.tasks.expire_free_trials',
